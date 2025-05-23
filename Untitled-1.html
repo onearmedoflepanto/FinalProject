@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>PJT08 - 은행 검색 애플리케이션</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+
+    header {
+      background-color: #d35400;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      padding: 20px;
+    }
+
+    .search-panel {
+      width: 250px;
+      margin-right: 20px;
+    }
+
+    .search-panel select,
+    .search-panel button {
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 8px;
+    }
+
+    .map-container {
+      flex-grow: 1;
+      display: flex;
+      gap: 20px;
+    }
+
+    .map-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .map {
+      min-height: 45vh;
+      width: 100%;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    PJT08 - 은행 검색 애플리케이션
+  </header>
+  <div class="container">
+    <div class="search-panel">
+      <label>광역시 / 도</label>
+      <select id="country">
+      </select>
+
+      <label>시 / 군 / 구</label>
+      <select id="city">
+      </select>
+
+      <label>은행</label>
+      <select id="bank">
+      </select>
+
+      <button id="searchBtn">찾기</button>
+    </div>
+    <div class="map-container">
+      <div class="map-box" id="map1">
+        <h4>은행 찾기</h4>
+        <div class="map"></div>
+      </div>
+      <div class="map-box" id="map2">
+        <h4>경로 찾기</h4>
+        <div class="map"></div>
+      </div>
+    </div>
+
+
+  </div>
+  </div>
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=&libraries=services"></script>
+  <script>
+    const mapContainer1 = document.getElementById("map1")
+    const mapContainer2 = document.getElementById("map2")
+
+    const map1 = new kakao.maps.Map(mapContainer1, {
+      center: new kakao.maps.LatLng(37.49818, 127.027386),
+      level: 3
+    })
+
+    const map2 = new kakao.maps.Map(mapContainer2, {
+      center: new kakao.maps.LatLng(37.5012743, 127.039585),
+      level: 3
+    })
+
+    const currentPosition = new kakao.maps.LatLng(37.5012743, 127.039585)
+    const places = new kakao.maps.services.Places()
+
+    const countrySelect = document.getElementById("country")
+    const citySelect = document.getElementById("city")
+    const bankSelect = document.getElementById("bank")
+    const searchBtn = document.getElementById("searchBtn")
+
+    let globalData = null
+    let currentMarker = null
+
+    fetch('/data.json')
+      .then(res => res.json())
+      .then(data => {
+        globalData = data
+
+        data.mapInfo.forEach(region => {
+          const opt = document.createElement("option")
+          opt.value = region.name
+          opt.textContent = region.name
+          countrySelect.appendChild(opt)
+        })
+
+        data.bankInfo.forEach(bankName => {
+          const opt = document.createElement("option")
+          opt.value = bankName
+          opt.textContent = bankName
+          bankSelect.appendChild(opt)
+        })
+
+        updateCities(data.mapInfo[0].name)
+        countrySelect.value = data.mapInfo[0].name
+      })
+
+    countrySelect.addEventListener("change", () => {
+      updateCities(countrySelect.value)
+    })
+
+    function updateCities(regionName) {
+      citySelect.innerHTML = ""
+      const region = globalData.mapInfo.find(r => r.name === regionName)
+      if (region) {
+        region.countries.forEach(cityName => {
+          const opt = document.createElement("option")
+          opt.value = cityName
+          opt.textContent = cityName
+          citySelect.appendChild(opt)
+        })
+      }
+    }
+
+    searchBtn.addEventListener("click", () => {
+      const selectedRegion = countrySelect.value
+      const selectedCity = citySelect.value
+      const selectedBank = bankSelect.value
+
+      const keyword = `${selectedRegion} ${selectedCity} ${selectedBank}`
+
+      places.keywordSearch(keyword, (result, status) => {
+        if (status === kakao.maps.services.Status.OK) {
+          const place = result[0]
+
+          // 기존 마커 제거
+          if (currentMarker) {
+            currentMarker.setMap(null)
+          }
+
+          const coords = new kakao.maps.LatLng(place.y, place.x)
+          map1.setCenter(coords)
+
+          currentMarker = new kakao.maps.Marker({
+            map: map1,
+            position: coords
+          })
+
+          const infowindow = new kakao.maps.InfoWindow({
+            content: `<div style="padding:5px;font-size:12px;">${place.place_name}</div>`
+          })
+          infowindow.open(map1, currentMarker)
+
+          currentMarker.addListener('click', () => {
+            requestDirections(coords);
+          })
+        } else {
+          alert("장소를 찾을 수 없습니다.")
+        }
+      })
+    })
+
+    function requestDirections(destinationLatLng) {
+      const REST_API_KEY = '14c912beb85db3715b4ffc15837d2886'
+
+      const origin = `${currentPosition.getLng()},${currentPosition.getLat()}`
+      const destination = `${destinationLatLng.getLng()},${destinationLatLng.getLat()}`
+
+      fetch(`https://apis-navi.kakaomobility.com/v1/directions?origin=${origin}&destination=${destination}&priority=RECOMMEND`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `KakaoAK ${REST_API_KEY}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const roads = data.routes[0].sections[0].roads
+          const linePath = []
+
+          roads.forEach(road => {
+            for (let i = 0; i < road.vertexes.length; i += 2) {
+              linePath.push(new kakao.maps.LatLng(road.vertexes[i + 1], road.vertexes[i]));
+            }
+          })
+
+          const polyline = new kakao.maps.Polyline({
+            map: map2,
+            path: linePath,
+            strokeWeight: 5,
+            strokeColor: '#007aff',
+            strokeOpacity: 0.9,
+            strokeStyle: 'solid'
+          })
+
+          const bounds = new kakao.maps.LatLngBounds()
+          linePath.forEach(latlng => bounds.extend(latlng))
+          map2.setBounds(bounds)
+        })
+        .catch(err => {
+          console.error("경로 요청 실패", err)
+          alert("경로 요청에 실패했습니다.")
+        })
+    }
+  </script>
+</body>
+
+
+</body>
+
+</html>
