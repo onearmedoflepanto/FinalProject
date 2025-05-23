@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Virtualenv
+venv/
+.env/
+.env.*
+
+# Django specific
+*.sqlite3
+db.sqlite3
+/media/
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# Django static/media files
+staticfiles/
+media/
+
+# IDE/editor configs
+.vscode/
+.idea/
+*.swp
+
+# MacOS / Windows
+.DS_Store
+Thumbs.db
+
+# pip freeze output
+requirements.txt
+
+# Coverage/test
+htmlcov/
+coverage.xml
+*.cover
+.pytest_cache/
+.tox/
