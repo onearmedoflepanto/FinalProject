@@ -1,7 +1,7 @@
 <template>
   <nav class="bg-white shadow-md sticky top-0 z-50">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <RouterLink to="main" class="text-2xl font-bold text-teal-600 mr-4">FinScope</RouterLink>
+      <RouterLink to="/" class="text-2xl font-bold text-teal-600 mr-4">FinScope</RouterLink>
 
       <div class="hidden md:flex flex-grow justify-center items-center space-x-1 lg:space-x-3 menu-bar">
         <RouterLink to="/deposit-page" class="text-gray-700 font-medium text-sm">예적금 비교</RouterLink>

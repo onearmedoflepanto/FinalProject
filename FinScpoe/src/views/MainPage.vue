@@ -36,7 +36,7 @@
             <div class="info-box-content">
               <p class="text-sm">금, 원유 등 주요 현물 가격 정보를 제공합니다.</p>
               <div class="mt-4 flex-grow bg-gray-100 rounded flex items-center justify-center text-gray-400 text-sm">
-                현물 가격 차트 영역 (Toss API 연동 예정)
+                <canvas ref="priceChart"></canvas>
               </div>
             </div>
           </div>
@@ -55,6 +55,51 @@
     </main>
   </div>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { Chart, registerables } from 'chart.js'
+import axios from 'axios'
+
+Chart.register(...registerables)
+const priceChart = ref(null)
+
+onMounted(async () => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/api/stocks/commodities-summary/?mode=latest')
+    const data = await response.data
+
+    new Chart(priceChart.value, {
+      type: 'bar',
+      data: {
+        labels: ['Gold', 'Silver', 'Oil'],
+        datasets: [{
+          label: '가격 (USD)',
+          data: [data.gold, data.silver, data.oil],
+          backgroundColor: ['rgba(255, 215, 0, 0.7)', 'rgba(192, 192, 192, 0.7)', 'rgba(0, 0, 0, 0.7)'],
+          borderColor: ['gold', 'silver', 'black'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: '원자재 실시간 시세' }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    })
+  }
+
+  catch (error) {
+    console.log(error)
+  }
+})
+
+</script>
 
 <script>
 import navbar from '@/components/navbar.vue'
@@ -182,5 +227,10 @@ export default {
   opacity: 1;
   transform: translateY(0);
   transition: opacity 0.7s, transform 0.7s ease-out;
+}
+
+.canvas {
+  margin-top: 2rem;
+  height: 100%;
 }
 </style>
