@@ -34,8 +34,6 @@ media/
 .DS_Store
 Thumbs.db
 
-# pip freeze output
-requirements.txt
 
 # Coverage/test
 htmlcov/
