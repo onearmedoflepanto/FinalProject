@@ -1,0 +1,10 @@
+Django
+djangorestframework
+django-cors-headers
+djangorestframework-simplejwt
+selenium
+Pillow
+python-decouple
+python-dotenv
+requests
+yfinance
