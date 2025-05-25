@@ -10,4 +10,5 @@ urlpatterns = [
     path("commodities-summary/", views.get_commodity_prices),
     path("get_news/", views.get_news),
     path("exchange-summary/", views.get_exchange_info),
+    path("news-list/", views.get_news_list),
 ]

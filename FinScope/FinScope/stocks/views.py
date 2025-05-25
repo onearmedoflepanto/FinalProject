@@ -12,6 +12,7 @@ from rest_framework import status
 
 import yfinance as yf
 import requests
+import html
 
 # Create your views here.
 
@@ -116,5 +117,21 @@ def get_exchange_info(request):
     except Exception as e:
         print("환율 조회 api 오류.", e)
         data = {"USD": 1000, "JPY": 2000, "CNY": 1000}
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_news_list(request):
+    url = "https://openapi.naver.com/v1/search/news.json"
+    params = {"query": "주식", "display": 5, "sort": "date"}
+    headers = {
+        "X-Naver-Client-Id": "b0M_QXN6Gq2OJQNRMQxV",
+        "X-Naver-Client-Secret": "MMSZgyrptA",
+    }
+    res = requests.get(url, params=params, headers=headers)
+    data = []
+    for news in res.json().get("items", []):
+        data.append({"title": news["title"], "link": news["link"]})
 
     return Response(data, status=status.HTTP_200_OK)

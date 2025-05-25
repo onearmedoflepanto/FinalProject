@@ -44,9 +44,11 @@
           <div class="info-box-container">
             <h2>오늘의 뉴스</h2>
             <div class="info-box-content news-scroll">
-              <div v-for="(news, i) in dummyNews" :key="i" class="py-2 border-b border-gray-200 last:border-b-0">
-                <h4 class="font-medium text-sm text-gray-700 hover:text-teal-600 cursor-pointer">{{ news.title }}</h4>
-                <p class="text-xs text-gray-500">{{ news.source }} - {{ news.time }}</p>
+              <div v-for="(news, i) in newsList" :key="i" class="py-2 border-b border-gray-200 last:border-b-0">
+                <a :href="news.url" target="_blank" rel="noopener noreferrer"
+                  class="font-medium text-sm text-gray-700 hover:text-teal-600 cursor-pointer">
+                  {{ news.title }}
+                </a>
               </div>
             </div>
           </div>
@@ -59,6 +61,8 @@
 <script setup>
 import commoditiesChart from '@/components/commoditiesChart.vue'
 import exchangeRateChart from "@/components/exchangeRateChart.vue"
+
+
 </script>
 
 <script>
@@ -67,6 +71,7 @@ import img1 from '@/assets/images/finance_01.jpg'
 import img2 from '@/assets/images/finance_02.jpg'
 import img3 from '@/assets/images/finance_03.jpg'
 import img4 from '@/assets/images/finance_04.jpg'
+import axios from 'axios'
 
 export default {
   components: {
@@ -79,14 +84,8 @@ export default {
       ],
       currentSlide: 0,
       intervalRef: null,
-      dummyNews: [
-        { title: "뉴스 제목 1: 시장 동향 분석", source: "FinScope News", time: "1시간 전" },
-        { title: "뉴스 제목 2: 주요 경제 지표 발표", source: "경제일보", time: "2시간 전" },
-        { title: "뉴스 제목 3: 기술주 강세 전망", source: "테크 투데이", time: "3시간 전" },
-        { title: "뉴스 제목 4: 국제 유가 변동", source: "글로벌 마켓", time: "4시간 전" },
-        { title: "뉴스 제목 5: 새로운 투자 기회", source: "투자 인사이트", time: "5시간 전" }
-      ]
-    };
+      newsList: [],
+    }
   },
   methods: {
     goToSlide(index) {
@@ -108,15 +107,25 @@ export default {
     resetCarousel() {
       this.pauseCarousel();
       this.startCarousel();
+    },
+    async fetchNews() {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/stocks/news-list/')
+        this.newsList = response.data
+      }
+      catch (error) {
+        console.error('뉴스 api 요청 실패', error)
+      }
     }
   },
   mounted() {
-    this.startCarousel();
+    this.startCarousel()
+    this.fetchNews()
   },
   beforeUnmount() {
-    this.pauseCarousel();
+    this.pauseCarousel()
   }
-};
+}
 </script>
 
 <style scoped>
