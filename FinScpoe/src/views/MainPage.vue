@@ -20,13 +20,13 @@
       </div>
 
       <div class="container mx-auto px-6 py-8 md:py-12">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch" style="min-height: 350px;">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch min-h-[600px];">
           <div class="info-box-container">
             <h3>실시간 환율</h3>
             <div class="info-box-content">
               <p class="text-sm">주요 통화별 현재 환율 변동을 확인하세요.</p>
               <div class="mt-4 flex-grow bg-gray-100 rounded flex items-center justify-center text-gray-400 text-sm">
-                환율 차트 영역 (Chart.js 연동 예정)
+                <exchangeRateChart />
               </div>
             </div>
           </div>
@@ -36,7 +36,7 @@
             <div class="info-box-content">
               <p class="text-sm">금, 원유 등 주요 현물 가격 정보를 제공합니다.</p>
               <div class="mt-4 flex-grow bg-gray-100 rounded flex items-center justify-center text-gray-400 text-sm">
-                현물 가격 차트 영역 (Toss API 연동 예정)
+                <commoditiesChart />
               </div>
             </div>
           </div>
@@ -55,6 +55,11 @@
     </main>
   </div>
 </template>
+
+<script setup>
+import commoditiesChart from '@/components/commoditiesChart.vue'
+import exchangeRateChart from "@/components/exchangeRateChart.vue"
+</script>
 
 <script>
 import navbar from '@/components/navbar.vue'

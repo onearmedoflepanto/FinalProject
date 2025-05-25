@@ -93,3 +93,28 @@ def get_commodity_prices(request):
         except Exception as e:
             data[name] = {"error": str(e)}
     return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_exchange_info(request):
+    try:
+        exchange_usd = requests.get(
+            "https://m.search.naver.com/p/csearch/content/qapirender.nhn?key=calculator&pkid=141&q=%ED%99%98%EC%9C%A8&where=m&u1=keb&u6=standardUnit&u7=0&u3=USD&u4=KRW&u8=down&u2=1"
+        ).json()
+        exchange_jpy = requests.get(
+            "https://m.search.naver.com/p/csearch/content/qapirender.nhn?key=calculator&pkid=141&q=%ED%99%98%EC%9C%A8&where=m&u1=keb&u6=standardUnit&u7=0&u3=JPY&u4=KRW&u8=down&u2=1"
+        ).json()
+        exchange_cny = requests.get(
+            "https://m.search.naver.com/p/csearch/content/qapirender.nhn?key=calculator&pkid=141&q=%ED%99%98%EC%9C%A8&where=m&u1=keb&u6=standardUnit&u7=0&u3=CNY&u4=KRW&u8=down&u2=1"
+        ).json()
+
+        exchange_usd = float(exchange_usd["country"][1]["value"].replace(",", ""))
+        exchange_jpy = float(exchange_jpy["country"][1]["value"].replace(",", "")) * 100
+        exchange_cny = float(exchange_cny["country"][1]["value"].replace(",", "")) * 10
+
+        data = {"USD": exchange_usd, "JPY": exchange_jpy, "CNY": exchange_cny}
+    except Exception as e:
+        print("환율 조회 api 오류.", e)
+        data = {"USD": 1000, "JPY": 2000, "CNY": 1000}
+
+    return Response(data, status=status.HTTP_200_OK)
