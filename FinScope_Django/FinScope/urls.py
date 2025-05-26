@@ -19,12 +19,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts import views as account_views # Import views from the accounts app
+from accounts import views as account_views  # Import views from the accounts app
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("login/", account_views.login_page, name="login_page"), # Add this line
-    path("sign_up/", account_views.signup_page, name="signup_page"), # Add this line
     path("api/accounts/", include("accounts.urls")),
     path("api/stocks/", include("stocks.urls")),
     path("api/boards/", include("boards.urls")),

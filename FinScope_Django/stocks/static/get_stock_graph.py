@@ -3,10 +3,10 @@ import json
 import re
 import time
 from pathlib import Path
-from datetime import date
+from decouple import config
 
-APP_KEY = "PS4M8p4kbX9mVmlPW1eCl2DeNo7uoMeAUuWf"
-APP_SECRET = "7EU0okINfd9YJnLyAqfJNpxE+dr+uwQGgJ+6Fey5AHKUQDWzCqnB1Pd2B3roV/G8jDBDwAl16GNCmnRd26SHTeqPeT9Ofd8BO/UPgGgpnGp79t39kRmbWQCNVJhX8V5RxYUEF+zecX6nc1nAdAGmJuxyc49V0ccHX3Q1NRvXSS11uuyGr2A="
+APP_KEY = config("HR_API_ID")
+APP_SECRET = config("HR_API_SECRET")
 
 BASE_URL = "https://openapi.koreainvestment.com:9443"
 TOKEN_FILE = Path("accestoken.json")
@@ -57,32 +57,7 @@ def stockcodesearch(name):
 
 
 def get_domestic_stock_info(access_token, stock_code):
-    url = f"{BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn"
-    headers = {
-        "Content-Type": "application/json",
-        "authorization": f"Bearer {access_token}",
-        "appkey": APP_KEY,
-        "appsecret": APP_SECRET,
-        "tr_id": "FHKST03010200",
-        "tr_count": "",
-        "custtype": "P",
-        "hashkey": access_token,
-    }
-    params = {
-        "FID_COND_MRKT_DIV_CODE": "J",
-        "FID_INPUT_ISCD": stock_code,
-        "FID_INPUT_HOUR_1": "090000",
-        "FID_PW_DATA_INCU_YN": "",
-        "FID_ETC_CLS_CODE": "",
-    }
-
-    response = requests.get(url, headers=headers, params=params)
-    if response.status_code == 200:
-        data = response.json()
-        print(data)
-        return data
-    else:
-        print("조회 실패:", response.status_code, response.text)
+    pass
 
 
 def get_overseas_stock_info(access_token, stock_code):
@@ -134,3 +109,6 @@ def get_stock_graph(name):
         get_overseas_stock_info(access_token, stock_code)
     else:
         print("코드 입력 오류/", stock_code)
+
+
+get_stock_graph(input())

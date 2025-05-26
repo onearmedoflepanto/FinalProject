@@ -9,6 +9,7 @@ import MyPage from '../views/MyPage.vue'
 import RecommendDeposit from '../views/RecommendDeposit.vue'
 import StockInfo from '../views/StockInfo.vue'
 import Signup from '../views/Signup.vue'
+import NaverLoginCallback from '@/views/NaverLoginCallback.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -63,6 +64,11 @@ const router = createRouter({
       name: 'signup',
       component: Signup,
     },
+    {
+      path: '/login/naver/callback',
+      name: 'naver-callback',
+      component: NaverLoginCallback
+    }
   ],
 })
 
