@@ -3,12 +3,11 @@ import requests
 import json
 import datetime
 import pandas as pd
+from decouple import config
 
-# KIS API 설정
-api_key = "PS4M8p4kbX9mVmlPW1eCl2DeNo7uoMeAUuWf"
-api_secret = "7EU0okINfd9YJnLyAqfJNpxE+dr+uwQGgJ+6Fey5AHKUQDWzCqnB1Pd2B3roV/G8jDBDwAl16GNCmnRd26SHTeqPeT9Ofd8BO/UPgGgpnGp79t39kRmbWQCNVJhX8V5RxYUEF+zecX6nc1nAdAGmJuxyc49V0ccHX3Q1NRvXSS11uuyGr2A="
+api_key = config("KIS_API_ID")
+api_secret = config("KIS_API_SECRET")
 
-# KIS API 기본 설정
 URL_BASE = "https://openapi.koreainvestment.com:9443"
 
 
@@ -34,7 +33,6 @@ def get_access_token():
         return None
 
 
-# time_end를 minutes만큼 줄여주는 함수
 def decrease_time(time_str, minutes):
     """time_str을 분 단위로 감소시켜서 새로운 시간을 반환"""
     time_format = "%H%M%S"
@@ -43,7 +41,6 @@ def decrease_time(time_str, minutes):
     return dt.strftime(time_format)
 
 
-# 당일 분봉 OHLCV 데이터 조회 함수
 def get_minute_ohlcv_data(access_token, code="005930", time_end="153000"):
     """당일 분봉 OHLCV 데이터를 조회하고 DataFrame으로 반환"""
     PATH = "/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice"
@@ -51,17 +48,14 @@ def get_minute_ohlcv_data(access_token, code="005930", time_end="153000"):
 
     all_data = []
 
-    # 반복적으로 데이터를 요청하면서 time_end 값을 줄여가며 데이터를 받아옴
     while True:
-        # 현재 날짜 설정
-        # today = datetime.datetime.now().strftime('%Y%m%d')
 
         headers = {
             "Content-Type": "application/json",
             "authorization": f"Bearer {access_token}",
             "appKey": api_key,
             "appSecret": api_secret,
-            "tr_id": "FHKST03010200",  # 당일 분봉 데이터 조회용 거래 ID
+            "tr_id": "FHKST03010200",
         }
 
         params = {
@@ -118,19 +112,17 @@ def get_minute_ohlcv_data(access_token, code="005930", time_end="153000"):
             "Volume": "float",
         }
     )  # 데이터 타입 변환
-    df = df[["DateTime", "Open", "High", "Low", "Close", "Volume"]]  # 열 정렬
-    df = df.sort_values(by="DateTime", ascending=True)  # 시간 오름차순 정렬
-    df = df.reset_index(drop=True)  # 인덱스를 다시 설정
+    df = df[["DateTime", "Open", "High", "Low", "Close", "Volume"]]
+    df = df.sort_values(by="DateTime", ascending=True)
+    df = df.reset_index(drop=True)
 
     return df
 
 
-# 메인 실행 부분
 if __name__ == "__main__":
     access_token = get_access_token()
     if access_token:
 
-        # 종목, 조회 종료 시간 지정 (예: 15:30:00까지 데이터를 받아오기 시작)
         code_stock_krx = "032640"
         time_end = "153000"  # 종료 시간
 

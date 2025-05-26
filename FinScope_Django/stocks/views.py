@@ -139,3 +139,16 @@ def get_news_list(request):
         data.append({"title": processed, "link": news["link"]})
 
     return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_chart_graph(request, name):
+    df = get_stock_graph(name)
+
+    if df is None:
+        return Response(
+            {"error": "차트 데이터 조회 실패"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    else:
+        data = df.to_dict(orient="records")
+        return Response(data, status=status.HTTP_200_OK)

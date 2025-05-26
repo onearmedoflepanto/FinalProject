@@ -5,6 +5,7 @@ import json
 
 client = OpenAI(api_key=config("OPENAI_API_KEY"))
 
+
 def analyze_stock_comments(comments: list[str]) -> dict:
     joined_comments = "\n".join(comments)
     prompt = f"""
@@ -23,14 +24,11 @@ def analyze_stock_comments(comments: list[str]) -> dict:
     """
 
     response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.5
+        model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.5
     )
-    
+
     try:
         content = response.choices[0].message.content
         return json.loads(content)
     except:
-        return {"summary" : "내용 없음", "temperature" : 0}
-    
+        return {"summary": "내용 없음", "temperature": 0}
