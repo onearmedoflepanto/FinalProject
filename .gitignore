@@ -189,6 +189,27 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# Additional Vue.js specific ignores
+logs
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+/cypress/videos/
+/cypress/screenshots/
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.tsbuildinfo
+
 # End of https://www.toptal.com/developers/gitignore/api/django,vuejs,vue
-
-
+>>>>>>> dev_pillar
