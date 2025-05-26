@@ -5,7 +5,7 @@ export async function fetchCommodityData(commodity) {
   const rawData = response.data[commodity] || {}
 
   return Object.entries(rawData).map(([timestamp, price]) => ({
-    Date: timestamp.split(' ')[0],
+    Date: timestamp, // Keep the full timestamp string
     Price: price
   }))
 }

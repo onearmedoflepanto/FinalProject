@@ -1,7 +1,7 @@
 <style scoped>
 canvas {
   max-width: 100%;
-  height: 400px;
+  height: 100%;
 }
 
 body {
@@ -71,7 +71,7 @@ main {
 
 .chart-container {
   position: relative;
-  height: 400px;
+  height: 600px;
   width: 100%;
   background-color: #f9fafb;
   border-radius: 0.5rem;
@@ -81,28 +81,42 @@ main {
 </style>
 
 <template>
-  <div class="p-4">
-    <div class="flex space-x-4 mb-4">
-      <button @click="selectCommodity('gold')" :class="btnClass('gold')">금</button>
-      <button @click="selectCommodity('silver')" :class="btnClass('silver')">은</button>
-      <button @click="selectCommodity('oil')" :class="btnClass('oil')">유가</button>
-    </div>
+  <navbar />
+  <main class="flex-grow container mx-auto px-4 sm:px-6 py-8 md:py-12">
+    <div class="bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200">
+      <h1 class="text-2xl md:text-3xl font-bold text-teal-700 mb-2 text-center">현물 상품 비교</h1>
+      <p class="text-center text-gray-600 mb-8 text-lg">금/은/유가 가격 변동</p>
 
-    <div class="mb-4">
-      <label>시작일: <input type="date" v-model="startDate" /></label>
-      <label class="ml-4">종료일: <input type="date" v-model="endDate" /></label>
-    </div>
+      <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 p-4 bg-gray-100 rounded-lg">
+        <div class="flex items-center gap-2">
+          <label for="startDate" class="text-sm font-medium text-gray-700">시작일:</label>
+          <input type="date" v-model="startDate" name="startDate" class="date-input">
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="endDate" class="text-sm font-medium text-gray-700">종료일:</label>
+          <input type="date" v-model="endDate" name="endDate" class="date-input">
+        </div>
+        <div class="flex items-center gap-2 mt-4 sm:mt-0">
+          <button @click="selectCommodity('gold')" class="control-button" :class="btnClass('gold')">금 (Gold)</button>
+          <button @click="selectCommodity('silver')" class="control-button" :class="btnClass('silver')">은
+            (Silver)</button>
+          <button @click="selectCommodity('oil')" id="oilBtn" class="control-button" :class="btnClass">유가 (Oil)</button>
+        </div>
+      </div>
 
-    <p v-if="loading">{{ loadingMessage }}</p>
-    <canvas v-show="!loading && chartData.length" ref="chartCanvas" class="w-full h-96"></canvas>
-    <p v-if="!loading && !chartData.length">데이터가 없습니다.</p>
-  </div>
+      <div class="chart-container flex justify-center items-center min-h-[300px]">
+        <canvas v-show="!loading && chartData.length" ref="chartCanvas"></canvas>
+        <p v-if="loading">{{ loadingMessage }}</p>
+      </div>
+    </div>
+  </main>
 </template>
 
 <script setup>
+import navbar from '@/components/navbar.vue'
 import { ref, watch, onMounted } from 'vue'
 import { fetchCommodityData } from '@/api/stockfetch.js'
-import { parseISO, isAfter, isBefore, isSameDay, isValid, formatISO } from 'date-fns'
+import { parseISO, isAfter, isBefore, isSameDay, isValid } from 'date-fns' // Removed formatISO
 import { Chart, registerables } from 'chart.js'
 import 'chartjs-adapter-date-fns'
 Chart.register(...registerables)
@@ -121,12 +135,18 @@ const chartData = ref([])
 async function loadData() {
   loading.value = true
   loadingMessage.value = `${commodityName(currentCommodity.value)} 가격 데이터를 불러오는 중...`
-  const raw = await fetchCommodityData(currentCommodity.value)
-  chartData.value = filterData(raw)
+
+  const fetchedData = await fetchCommodityData(currentCommodity.value) // fetchCommodityData now returns an array
+
+  const processedData = fetchedData.map(item => ({
+    Date: parseISO(item.Date), // item.Date is the full timestamp string
+    Price: item.Price
+  }));
+  chartData.value = filterData(processedData);
+
   renderChart()
   loading.value = false
 }
-
 function selectCommodity(commodity) {
   currentCommodity.value = commodity
   loadData()
@@ -140,8 +160,8 @@ function filterData(data) {
   const s = startDate.value ? parseISO(startDate.value) : null
   const e = endDate.value ? parseISO(endDate.value) : null
 
-  return data.filter(({ Date }) => {
-    const d = parseISO(Date)
+  return data.filter(({ Date: dateObj }) => {
+    const d = dateObj
     if (!isValid(d)) return false
     const after = s ? isSameDay(d, s) || isAfter(d, s) : true
     const before = e ? isSameDay(d, e) || isBefore(d, e) : true
@@ -159,48 +179,43 @@ function renderChart() {
     currentCommodity.value === 'silver' ? '#A0AEC0' : '#8B5CF6'
   const backgroundColor = borderColor.replace(')', ', 0.2)').replace('rgb', 'rgba')
 
+  // const formattedLabels = ... // Removed this line
   chartInstance.value = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: chartData.value.map(d => d.Date),
+      // labels: formattedLabels, // Removed this line, Chart.js generates labels for time scale
       datasets: [{
-        label: `${commodityName(currentCommodity.value)} 가격 (USD)`,
-        data: chartData.value.map(d => d.Price),
-        borderColor,
-        backgroundColor,
-        tension: 0.1,
+        label: `${commodityName(currentCommodity.value)} 가격`,
+        data: chartData.value.map(item => ({ x: item.Date, y: item.Price })), // Use {x,y} data structure
+        borderColor: borderColor,
+        backgroundColor: backgroundColor,
+        pointRadius: 0,
         borderWidth: 2,
-        pointRadius: chartData.value.length < 50 ? 3 : 1,
-        pointHoverRadius: 5
+        tension: 0.3
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
       scales: {
         x: {
-          type: 'time',
+          type: 'time', // Set x-axis to time scale
           time: {
-            unit: 'month',
-            tooltipFormat: 'yyyy-MM-dd',
-            displayFormats: { month: 'yyyy-MM' }
+            unit: 'hour', // Display units in hours
+            tooltipFormat: 'yyyy-MM-dd HH:mm', // Format for tooltips
+            displayFormats: { // Format for axis labels
+              hour: 'HH:mm', // e.g., 10:00, 11:00
+              minute: 'HH:mm' // In case data is more granular
+            }
           },
-          title: { display: true, text: '날짜' },
-          ticks: { autoSkip: true, maxTicksLimit: 12 }
+          title: { display: true, text: '시간' }
         },
         y: {
-          title: { display: true, text: '가격 (USD)' },
+          title: { display: true, text: '가격' },
           beginAtZero: false
         }
       },
       plugins: {
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          callbacks: {
-            label: ctx => `${ctx.dataset.label || ''}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ctx.parsed.y)}`
-          }
-        }
+        legend: { display: true }
       }
     }
   })

@@ -13,6 +13,9 @@ from rest_framework import status
 import yfinance as yf
 import requests
 import html
+import re
+from decouple import config
+
 
 # Create your views here.
 
@@ -126,12 +129,14 @@ def get_news_list(request):
     url = "https://openapi.naver.com/v1/search/news.json"
     params = {"query": "주식", "display": 5, "sort": "date"}
     headers = {
-        "X-Naver-Client-Id": "b0M_QXN6Gq2OJQNRMQxV",
-        "X-Naver-Client-Secret": "MMSZgyrptA",
+        "X-Naver-Client-Id": config("NAVER_API_ID"),
+        "X-Naver-Client-Secret": config("NAVER_API_SECRET"),
     }
     res = requests.get(url, params=params, headers=headers)
     data = []
     for news in res.json().get("items", []):
-        data.append({"title": news["title"], "link": news["link"]})
+        title = html.unescape(news["title"])
+        processed = re.sub(r"<[^>]+>", "", title)
+        data.append({"title": processed, "link": news["link"]})
 
     return Response(data, status=status.HTTP_200_OK)
