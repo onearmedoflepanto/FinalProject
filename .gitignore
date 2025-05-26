@@ -212,4 +212,3 @@ coverage
 *.tsbuildinfo
 
 # End of https://www.toptal.com/developers/gitignore/api/django,vuejs,vue
->>>>>>> dev_pillar

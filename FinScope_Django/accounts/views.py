@@ -7,9 +7,10 @@ import requests
 from django.conf import settings
 from django.shortcuts import redirect, render
 
-from .serializers import UserSerializer, SavedFinancialProductSerializer # Import SavedFinancialProductSerializer
-from .models import SavedFinancialProduct # Import SavedFinancialProduct model
-from rest_framework.permissions import IsAuthenticated
+from .serializers import UserSerializer, SavedFinancialProductSerializer, NotificationSubscriptionSerializer, FinancialProductSerializer # Import FinancialProductSerializer
+from .models import SavedFinancialProduct, FinancialProduct # Import FinancialProduct model
+from rest_framework import generics # For ListAPIView
+from rest_framework.permissions import IsAuthenticated, AllowAny # AllowAny for public product listing
 
 from django.shortcuts import get_object_or_404
 
@@ -159,6 +160,40 @@ def unsave_financial_product(request, product_pk): # product_pk is the ID of the
         return Response(status=status.HTTP_204_NO_CONTENT)
     except SavedFinancialProduct.DoesNotExist:
         return Response({"detail": "Saved product not found or permission denied."}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def toggle_product_notification(request, saved_product_pk):
+    """
+    Toggles the 'notify_on_rate_change' status for a specific SavedFinancialProduct.
+    Expects {'notify_on_rate_change': true/false} in the request body.
+    """
+    try:
+        saved_product = SavedFinancialProduct.objects.get(pk=saved_product_pk, user=request.user)
+    except SavedFinancialProduct.DoesNotExist:
+        return Response({"detail": "Saved product not found or you do not have permission to modify it."},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    serializer = NotificationSubscriptionSerializer(instance=saved_product, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class FinancialProductListView(generics.ListAPIView):
+    """
+    API view to list financial products.
+    Can be filtered by product_type query parameter (e.g., ?product_type=deposit)
+    """
+    serializer_class = FinancialProductSerializer
+    permission_classes = [AllowAny] # Publicly accessible list
+
+    def get_queryset(self):
+        queryset = FinancialProduct.objects.prefetch_related('options').all()
+        product_type = self.request.query_params.get('product_type', None)
+        if product_type:
+            queryset = queryset.filter(product_type=product_type)
+        return queryset.order_by('kor_co_nm', 'fin_prdt_nm')
 
 
 @api_view(['GET'])

@@ -12,15 +12,33 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
-from decouple import config
+from decouple import config as default_decouple_config, Config, RepositoryEnv # Import default config too
+import os # Import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Explicitly define the .env file path
+DOTENV_PATH = BASE_DIR / '.env'
 
-SECRET_KEY = config("SECRET_KEY")
-DEBUG = config("DEBUG", default=True, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*").split(",")
+# Create a specific Config instance pointing to the .env file
+# This ensures decouple knows exactly where to look.
+if os.path.exists(DOTENV_PATH):
+    env_config = Config(RepositoryEnv(DOTENV_PATH))
+else:
+    # Fallback if .env is somehow not found, though it should be.
+    # This will likely cause errors if keys are mandatory and not found.
+    print(f"WARNING: .env file not found at {DOTENV_PATH}. Using default config which might miss keys.")
+    from decouple import config as env_config # Use default config as fallback
+
+
+SECRET_KEY = env_config("SECRET_KEY")
+DEBUG = env_config("DEBUG", default=True, cast=bool)
+ALLOWED_HOSTS = env_config("ALLOWED_HOSTS", default="*").split(",")
+
+# FSS API Key
+VITE_FSS_API_KEY = env_config('VITE_FSS_API_KEY', default=None) # Reverted to load from .env
+# print(f"DEBUG settings.py: VITE_FSS_API_KEY from env_config = '{VITE_FSS_API_KEY}' (Type: {type(VITE_FSS_API_KEY)})") # DEBUG LINE REMOVED
 
 GOOGLE_REDIRECT_URI = "http://localhost:8001/api/accounts/google/callback/"
 
@@ -166,3 +184,17 @@ load_dotenv()
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
 LOGIN_REDIRECT_URL = "http://localhost:8001/api/accounts/google/callback/"
+
+# Email Configuration
+# For development, emails will be printed to the console.
+# For production, replace with your actual email service provider's settings (e.g., SMTP, SendGrid, AWS SES).
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # Console backend commented out
+
+# Gmail SMTP Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='')  # Your Gmail address from .env
+EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='') # Your Gmail App Password from .env
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER # Set default from email to your Gmail address

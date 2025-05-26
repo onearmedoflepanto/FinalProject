@@ -115,7 +115,16 @@
                         ]">
                         {{ isProductSaved(product) ? '저장됨' : 'MyPage에 저장' }}
                       </button>
-                      <p v-if="!isLoggedIn" class="text-sm text-red-500">상품을 저장하려면 로그인이 필요합니다.</p>
+                      <!-- Notification Toggle Button -->
+                      <button v-if="isLoggedIn && isProductSaved(product)"
+                              @click="handleToggleNotification(product)"
+                              :class="[
+                                'py-2.5 px-6 rounded-lg font-medium transition-colors ml-2',
+                                isSubscribedToNotifications(product) ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                              ]">
+                        {{ isSubscribedToNotifications(product) ? '알림 해제' : '금리변동 알림받기' }}
+                      </button>
+                      <p v-if="!isLoggedIn" class="text-sm text-red-500">상품을 저장하고 알림을 받으려면 로그인이 필요합니다.</p>
                       <!-- "가입하기" button removed -->
                     </div>
                   </div>
@@ -134,7 +143,7 @@
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
-import { fetchDepositProducts, fetchSavingsProducts, saveFinancialProduct } from '@/api/depositSavingsApi';
+import { fetchDepositProducts, fetchSavingsProducts, saveFinancialProduct, toggleNotificationSubscription } from '@/api/depositSavingsApi'; // Added toggleNotificationSubscription
 import { useAuthStore } from '@/stores/user';
 import { storeToRefs } from 'pinia';
 
@@ -148,13 +157,14 @@ const selectedBank = ref('all');
 const expandedProductId = ref(null);
 
 const sortedBanks = computed(() => {
-  const banks = new Set(allProducts.value.map(p => p.bank));
+  // product.kor_co_nm is the bank name from the new API data structure
+  const banks = new Set(allProducts.value.map(p => p.kor_co_nm));
   return Array.from(banks).sort();
 });
 
 const filteredAndSortedProducts = computed(() => {
   let productsToDisplay = allProducts.value.filter(product =>
-    selectedBank.value === 'all' || product.bank === selectedBank.value
+    selectedBank.value === 'all' || product.kor_co_nm === selectedBank.value // Use kor_co_nm
   );
 
   if (currentSortOrder.value !== 'default') {
@@ -177,12 +187,27 @@ const isProductSaved = computed(() => {
     if (!authUser.value || !authUser.value.saved_financial_products) {
       return false;
     }
-    const [fin_co_no, fin_prdt_cd] = productToCheck.id.split('_');
+    // productToCheck now comes from Django API, use its direct fields
     return authUser.value.saved_financial_products.some(savedProd =>
-      savedProd.fin_co_no === fin_co_no &&
-      savedProd.fin_prdt_cd === fin_prdt_cd &&
-      savedProd.product_type === currentProductType.value
+      savedProd.fin_co_no === productToCheck.fin_co_no &&
+      savedProd.fin_prdt_cd === productToCheck.fin_prdt_cd &&
+      savedProd.product_type === productToCheck.product_type // productToCheck.product_type should be 'deposit' or 'savings'
     );
+  };
+});
+
+const isSubscribedToNotifications = computed(() => {
+  return (productToCheck) => {
+    if (!isLoggedIn.value || !authUser.value || !authUser.value.saved_financial_products) {
+      return false;
+    }
+    // Find the saved product instance that matches the product being checked
+    const savedProductInstance = authUser.value.saved_financial_products.find(savedProd =>
+      savedProd.fin_co_no === productToCheck.fin_co_no &&
+      savedProd.fin_prdt_cd === productToCheck.fin_prdt_cd &&
+      savedProd.product_type === productToCheck.product_type // productToCheck.product_type
+    );
+    return savedProductInstance ? savedProductInstance.notify_on_rate_change : false;
   };
 });
 
@@ -197,33 +222,44 @@ const fetchData = async () => {
     if (currentProductType.value === 'deposit') {
       data = await fetchDepositProducts();
     } else {
-      data = await fetchSavingsProducts();
+      data = await fetchSavingsProducts(); // This now returns an array of products from Django
     }
 
-    const baseList = data && data.result && data.result.baseList ? data.result.baseList : [];
-    const optionList = data && data.result && data.result.optionList ? data.result.optionList : [];
-
-    const combinedProducts = baseList.map(base => {
-      const options = optionList.filter(opt => opt.fin_prdt_cd === base.fin_prdt_cd && opt.fin_co_no === base.fin_co_no);
+    // Data is now an array of products, each with a nested 'options' array.
+    // We need to transform this to match the structure expected by the template,
+    // particularly the 'rates' object and the top-level fields.
+    const processedProducts = data.map(product => {
       const rates = {};
-      options.forEach(opt => {
-        rates[opt.save_trm] = opt.intr_rate;
-      });
-
+      if (product.options && Array.isArray(product.options)) {
+        product.options.forEach(opt => {
+          // opt.save_trm is the key (e.g., "6", "12")
+          // opt.intr_rate is the value
+          if (opt.save_trm) { // Ensure save_trm is not null or undefined
+            rates[opt.save_trm] = opt.intr_rate;
+          }
+        });
+      }
+      
+      // The product object from Django already has most fields.
+      // We map them to the names the template expects if they are different,
+      // or ensure they exist.
       return {
-        id: `${base.fin_co_no}_${base.fin_prdt_cd}`,
-        fin_co_no: base.fin_co_no, // Store separately for saving
-        fin_prdt_cd: base.fin_prdt_cd, // Store separately for saving
-        bank: base.kor_co_nm,
-        name: base.fin_prdt_nm,
-        rates: rates,
-        submitMonth: base.dcls_month,
-        restriction: base.join_deny === '1' ? '제한없음' : (base.join_deny === '2' ? '서민전용' : '일부제한'),
-        way: base.join_way,
-        special: base.spcl_cnd,
+        ...product, // Spread all fields from the Django product
+        id: product.id, // Use the Django model's primary key as the main ID
+        bank: product.kor_co_nm, // Map kor_co_nm to bank
+        name: product.fin_prdt_nm, // Map fin_prdt_nm to name
+        rates: rates, // The processed rates object
+        submitMonth: product.dcls_month,
+        // 'restriction' needs to be mapped from 'join_deny' if the logic is still needed
+        // For now, assuming 'restriction' might not be directly available or needs mapping
+        // restriction: mapJoinDenyToRestriction(product.join_deny), // Example: you'd need this function
+        // For simplicity, if these fields are directly on product from serializer, they are fine:
+        // way: product.join_way,
+        // special: product.spcl_cnd,
       };
     });
-    allProducts.value = combinedProducts;
+
+    allProducts.value = processedProducts;
     selectedBank.value = 'all';
     currentSortOrder.value = 'default';
   } catch (error) {
@@ -265,11 +301,11 @@ const handleSaveProduct = async (product) => {
   }
 
   const productData = {
-    product_type: currentProductType.value,
+    product_type: product.product_type, // Use product_type from the product object
     fin_co_no: product.fin_co_no,
     fin_prdt_cd: product.fin_prdt_cd,
-    product_name: product.name,
-    bank_name: product.bank,
+    product_name: product.name, // This should be product.fin_prdt_nm from the new structure
+    bank_name: product.bank,   // This should be product.kor_co_nm
     interest_rate_12m: product.rates && product.rates['12'] ? parseFloat(product.rates['12']) : null,
   };
 
@@ -281,6 +317,47 @@ const handleSaveProduct = async (product) => {
   } catch (error) {
     alert('상품 저장에 실패했습니다. 이미 저장된 상품일 수 있습니다.');
     console.error("Failed to save product:", error);
+  }
+};
+
+const handleToggleNotification = async (product) => {
+  if (!isLoggedIn.value) {
+    alert('알림 설정을 변경하려면 로그인이 필요합니다.');
+    return;
+  }
+
+  const savedProductInstance = authUser.value.saved_financial_products.find(savedProd =>
+    savedProd.fin_co_no === product.fin_co_no &&
+    savedProd.fin_prdt_cd === product.fin_prdt_cd &&
+    savedProd.product_type === product.product_type // Use product.product_type
+  );
+
+  if (!savedProductInstance) {
+    alert('알림을 설정하려면 먼저 상품을 MyPage에 저장해야 합니다.');
+    // Optionally, we could auto-save it here, but for now, let's require manual save first.
+    // await handleSaveProduct(product); // Example: auto-save
+    // const newSavedInstance = authUser.value.saved_financial_products.find(...) // re-fetch or find
+    // if (!newSavedInstance) return; // if auto-save failed
+    // savedProductInstance = newSavedInstance;
+    return;
+  }
+
+  const currentStatus = savedProductInstance.notify_on_rate_change;
+  const newStatus = !currentStatus;
+
+  try {
+    const updatedSubscription = await toggleNotificationSubscription(savedProductInstance.id, newStatus);
+    // Update the local state in the authStore to reflect the change immediately
+    const productIndex = authUser.value.saved_financial_products.findIndex(p => p.id === savedProductInstance.id);
+    if (productIndex !== -1) {
+      // Ensure all relevant fields from the API response are updated
+      authUser.value.saved_financial_products[productIndex].notify_on_rate_change = updatedSubscription.notify_on_rate_change;
+      // Potentially update other fields if the API returns the full object
+    }
+    alert(`금리 변동 알림이 ${newStatus ? '설정' : '해제'}되었습니다.`);
+  } catch (error) {
+    alert('알림 설정 변경에 실패했습니다.');
+    console.error("Failed to toggle notification:", error);
   }
 };
 
@@ -341,128 +418,88 @@ onMounted(() => {
   border-color: #0d9488;
 }
 
-.sort-button:not(.active) {
-  background-color: #e5e7eb;
-  color: #374151;
-  border-color: #d1d5db;
-}
-
-.sort-button:not(.active):hover {
-  background-color: #d1d5db;
-}
-
-.sort-button {
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-  border: 1px solid transparent;
-  text-align: center;
-}
-
-.tab-button.active,
-.sort-button.active {
-  background-color: #0d9488;
-  /* teal-600 */
-  color: white;
-  border-color: #0d9488;
-  /* teal-600 */
-}
-
 .tab-button:not(.active),
 .sort-button:not(.active) {
   background-color: #e5e7eb;
-  /* gray-200 */
   color: #374151;
-  /* gray-700 */
   border-color: #d1d5db;
-  /* gray-300 */
 }
 
 .tab-button:not(.active):hover,
 .sort-button:not(.active):hover {
-  background-color: #d1d5db;
-  /* gray-300 */
+  background-color: #d1d5db; /* gray-300 */
 }
 
-.form-select {
-  padding: 0.625rem 2.5rem 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  background-color: white;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 1.5em 1.5em;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
+  .form-select {
+    padding: 0.625rem 2.5rem 0.625rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
 
-.form-select:focus {
-  outline: none;
-  border-color: #0d9488;
-  box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
-  border-color: #0d9488;
-  /* teal-600 */
-  box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
-  /* ring-teal-500 opacity-25 */
-}
+  .form-select:focus {
+    outline: none;
+    border-color: #0d9488;
+    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+    border-color: #0d9488;
+    /* teal-600 */
+    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+    /* ring-teal-500 opacity-25 */
+  }
 
-.table-container {
-  overflow-x: auto;
-}
+  .table-container {
+    overflow-x: auto;
+  }
 
-.product-table th,
-.product-table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  font-size: 0.875rem;
-  border-bottom: 1px solid #e5e7eb;
-}
+  .product-table th,
+  .product-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
 
-.product-table thead th {
-  background-color: #f3f4f6;
-  color: #374151;
-  font-weight: 600;
-}
+  .product-table thead th {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+  }
 
-.product-table tbody tr:hover {
-  background-color: #f0fdfa;
-}
+  .product-table tbody tr:hover {
+    background-color: #f0fdfa;
+  }
 
-.product-table .product-name-link {
-  color: #0d9488;
-  background-color: #f0fdfa;
-  /* teal-50 */
-}
+  .product-table .product-name-link {
+    color: #0d9488;
+    background-color: #f0fdfa;
+    /* teal-50 */
+  }
 
-.product-table .product-name-link {
-  color: #0d9488;
-  /* teal-600 */
-  cursor: pointer;
-  font-weight: 500;
-}
+  .product-table .product-name-link {
+    color: #0d9488;
+    /* teal-600 */
+    cursor: pointer;
+    font-weight: 500;
+  }
 
-.product-table .product-name-link:hover {
-  text-decoration: underline;
-}
+  .product-table .product-name-link:hover {
+    text-decoration: underline;
+  }
 
-.detail-section dt {
-  font-weight: 500;
-  color: #4b5563;
-}
+  .detail-section dt {
+    font-weight: 500;
+    color: #4b5563;
+  }
 
-.detail-section dd {
-  color: #1f2937;
-  =======color: #4b5563;
-  /* gray-600 */
-}
-
-.detail-section dd {
-  color: #1f2937;
-  /* gray-800 */
-}
+  .detail-section dd {
+    color: #1f2937; /* gray-800 */
+  }
 </style>
