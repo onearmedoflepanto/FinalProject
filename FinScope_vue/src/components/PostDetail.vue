@@ -2,7 +2,7 @@
   <div id="postDetailSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200">
     <div class="flex justify-between items-center mb-4">
       <h1 id="detailPostTitle" class="text-2xl md:text-3xl font-bold text-teal-700">{{ post.title }}</h1>
-      <button id="backToListBtnFromDetail" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 text-sm" @click="$emit('back-to-list')">
+      <button id="backToListBtnFromDetail" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 text-sm" @click.prevent="handleBackToList">
         목록으로
       </button>
     </div>
@@ -88,6 +88,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../stores/user.js';
+import { useRouter } from 'vue-router'; // Import useRouter
 
 const props = defineProps({
   post: {
@@ -98,10 +99,14 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  onBackToList: { // Add new prop for the function
+    type: Function,
+    required: true,
+  }
 });
 
 const emit = defineEmits([
-  'back-to-list',
+  // 'back-to-list', // Remove this as we are using a direct prop call
   'toggle-like',
   'toggle-bookmark',
   'edit-post',
@@ -112,8 +117,16 @@ const emit = defineEmits([
 ]);
 
 const authStore = useAuthStore();
+const router = useRouter(); // Get router instance
 const isLoggedIn = computed(() => authStore.isLoggedIn);
 const newCommentContent = ref('');
+
+const handleBackToList = () => {
+  if (props.onBackToList) {
+    props.onBackToList();
+  }
+  // router.push('/board'); // Force navigation to /board - Replaced by prop call
+};
 
 const formatDate = (dateString, includeTime = false) => {
   if (!dateString) return '';

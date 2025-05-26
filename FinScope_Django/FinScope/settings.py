@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "accounts",
     "boards",
     "stocks",
+    "news", # Add the news app
 ]
 
 MIDDLEWARE = [

@@ -44,7 +44,7 @@
           <label for="signupConfirmPassword" class="block text-sm font-medium text-gray-700 mb-1">비밀번호 확인</label>
           <input type="password" id="signupConfirmPassword" v-model="confirmPassword" class="w-full p-3 border border-gray-400 rounded-lg focus:ring-2 focus:ring-teal-500" required>
         </div>
-        <button type="submit" class="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-semibold">회원가입</button>
+        <button type="button" @click="handleSignupSubmit" class="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-semibold">회원가입</button>
           <p class="text-sm text-center mt-4">
           이미 계정이 있으신가요? <router-link to="/login" class="text-teal-600 hover:underline">로그인</router-link>
         </p>
@@ -66,6 +66,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const handleSignupSubmit = async () => {
+  console.log('DEBUG: handleSignupSubmit called'); // New log
   if (!name.value || !email.value || !password.value) {
     alert('모든 필수 정보를 입력해주세요.');
     return;
@@ -90,12 +91,26 @@ const handleSignupSubmit = async () => {
     const result = await authStore.signup(formData);
     
     if (result.success) {
-      alert(result.message || '회원가입 성공! 로그인 페이지로 이동합니다.');
-      router.push('/login'); // Redirect to login page after signup
+      console.log('DEBUG: result.success is TRUE. Message:', result.message); // New critical log
+      // alert(result.message || '회원가입 및 자동 로그인 성공!'); // Updated message - ALERT REMOVED
+      console.log('Signup successful, attempting redirection... (alert was removed for testing)');
+      const fromPath = router.options.history.state.back;
+      console.log('fromPath:', fromPath);
+      console.log('currentPath:', router.currentRoute.value.path);
+      // Check if fromPath exists and is not one of the auth pages to prevent redirection loops
+      if (fromPath && fromPath !== router.currentRoute.value.path && fromPath !== '/login' && fromPath !== '/signup') {
+        console.log('Redirecting to fromPath:', fromPath);
+        router.push(fromPath);
+      } else {
+        console.log('Redirecting to /');
+        router.push('/'); // Default to main page if no valid 'from' path
+      }
     } else {
+      console.log('DEBUG: result.success is FALSE. Message:', result.message); // New log
       alert(result.message || '회원가입에 실패했습니다. 다시 시도해주세요.');
     }
   } catch (error) {
+    console.error('DEBUG: Signup component CATCH block. Error:', error); // New log
     console.error('Signup component error:', error);
     alert('회원가입 처리 중 오류가 발생했습니다.');
   }

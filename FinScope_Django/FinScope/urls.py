@@ -26,4 +26,5 @@ urlpatterns = [
     path("api/accounts/", include("accounts.urls")),
     path("api/stocks/", include("stocks.urls")),
     path("api/boards/", include("boards.urls")),
+    path("api/news/", include("news.urls")), # Add news app urls
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

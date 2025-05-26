@@ -12,6 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
     is_liked = serializers.SerializerMethodField()
     is_bookmarked = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField() # Add this line
 
     class Meta:
         model = Post
@@ -39,14 +40,24 @@ class PostSerializer(serializers.ModelSerializer):
     def get_comments_count(self, obj):
         return obj.comments.count()
 
+    def get_comments(self, obj):
+        # We need to import CommentSerializer here or ensure it's defined before PostSerializer
+        # For simplicity, assuming CommentSerializer is defined above or imported correctly.
+        comments = Comment.objects.filter(post=obj).order_by('created_at')
+        serializer = CommentSerializer(comments, many=True, context=self.context)
+        return serializer.data
+
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     user_id = serializers.IntegerField(source='user.id', read_only=True)
+    post_title = serializers.CharField(source='post.title', read_only=True) # Added post title
     is_following = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = '__all__' # This will include post_title if it's a property or annotation on model, or added above
+        # Explicitly list fields to be sure:
+        # fields = ['id', 'user', 'user_id', 'post', 'post_title', 'content', 'created_at', 'updated_at', 'is_following']
         read_only_fields = ['user', 'post', 'created_at']
 
     def get_is_following(self, obj):

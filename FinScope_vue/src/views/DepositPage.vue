@@ -106,11 +106,17 @@
                         <span class="font-medium">{{ term }}개월:</span> {{ formatRate(rate) }}
                       </p>
                     </div>
-                    <div class="mt-6 text-center" :class="{ hidden: !isLoggedIn }">
-                      <button class="bg-teal-600 text-white py-2.5 px-6 rounded-lg hover:bg-teal-700 font-medium"
-                        @click="joinProduct(product)">
-                        가입하기
+                    <div
+                      class="mt-6 flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                      <button v-if="isLoggedIn" @click="handleSaveProduct(product)" :disabled="isProductSaved(product)"
+                        :class="[
+                          'py-2.5 px-6 rounded-lg font-medium transition-colors',
+                          isProductSaved(product) ? 'bg-green-500 text-white cursor-not-allowed' : 'bg-sky-500 text-white hover:bg-sky-600'
+                        ]">
+                        {{ isProductSaved(product) ? '저장됨' : 'MyPage에 저장' }}
                       </button>
+                      <p v-if="!isLoggedIn" class="text-sm text-red-500">상품을 저장하려면 로그인이 필요합니다.</p>
+                      <!-- "가입하기" button removed -->
                     </div>
                   </div>
                 </td>
@@ -127,24 +133,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { fetchDepositProducts, fetchSavingsProducts } from '@/api/depositSavingsApi'; // Adjust path if needed
-import NavigationBar from '@/components/NavigationBar.vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
+import { fetchDepositProducts, fetchSavingsProducts, saveFinancialProduct } from '@/api/depositSavingsApi';
+import { useAuthStore } from '@/stores/user';
+import { storeToRefs } from 'pinia';
 
-const isLoggedIn = ref(false); // This should be managed by a global state/store in a real app
+const authStore = useAuthStore();
+const { user: authUser, isLoggedIn } = storeToRefs(authStore);
+
 const currentProductType = ref('deposit');
-const currentSortOrder = ref('default'); // 'default', 'highToLow', 'lowToHigh'
+const currentSortOrder = ref('default');
 const allProducts = ref([]);
 const selectedBank = ref('all');
-const expandedProductId = ref(null); // Tracks the ID of the currently expanded product
+const expandedProductId = ref(null);
 
-// Computed property for unique sorted bank names
 const sortedBanks = computed(() => {
   const banks = new Set(allProducts.value.map(p => p.bank));
   return Array.from(banks).sort();
 });
 
-// Computed property for filtered and sorted products
 const filteredAndSortedProducts = computed(() => {
   let productsToDisplay = allProducts.value.filter(product =>
     selectedBank.value === 'all' || product.bank === selectedBank.value
@@ -152,12 +159,12 @@ const filteredAndSortedProducts = computed(() => {
 
   if (currentSortOrder.value !== 'default') {
     productsToDisplay.sort((a, b) => {
-      const rateA = a.rates['12'] !== null && a.rates['12'] !== undefined ? a.rates['12'] : (currentSortOrder.value === 'highToLow' ? -Infinity : Infinity);
-      const rateB = b.rates['12'] !== null && b.rates['12'] !== undefined ? b.rates['12'] : (currentSortOrder.value === 'highToLow' ? -Infinity : Infinity);
+      const rateA = a.rates['12'] !== null && a.rates['12'] !== undefined ? parseFloat(a.rates['12']) : (currentSortOrder.value === 'highToLow' ? -Infinity : Infinity);
+      const rateB = b.rates['12'] !== null && b.rates['12'] !== undefined ? parseFloat(b.rates['12']) : (currentSortOrder.value === 'highToLow' ? -Infinity : Infinity);
 
       if (currentSortOrder.value === 'highToLow') {
         return rateB - rateA;
-      } else { // lowToHigh
+      } else {
         return rateA - rateB;
       }
     });
@@ -165,12 +172,25 @@ const filteredAndSortedProducts = computed(() => {
   return productsToDisplay;
 });
 
+const isProductSaved = computed(() => {
+  return (productToCheck) => {
+    if (!authUser.value || !authUser.value.saved_financial_products) {
+      return false;
+    }
+    const [fin_co_no, fin_prdt_cd] = productToCheck.id.split('_');
+    return authUser.value.saved_financial_products.some(savedProd =>
+      savedProd.fin_co_no === fin_co_no &&
+      savedProd.fin_prdt_cd === fin_prdt_cd &&
+      savedProd.product_type === currentProductType.value
+    );
+  };
+});
+
 const hasInterestRatesForProduct = (product) => {
   if (!product || !product.rates) return false;
   return Object.values(product.rates).some(rate => rate !== null && rate !== undefined);
 };
 
-// Methods
 const fetchData = async () => {
   try {
     let data;
@@ -179,36 +199,33 @@ const fetchData = async () => {
     } else {
       data = await fetchSavingsProducts();
     }
-    // Assuming data structure from FSS API is similar to placeholderData
-    // FSS API returns 'result' object with 'baseList' and 'optionList'
-    // We need to combine them to get the full product details
+
     const baseList = data && data.result && data.result.baseList ? data.result.baseList : [];
     const optionList = data && data.result && data.result.optionList ? data.result.optionList : [];
 
     const combinedProducts = baseList.map(base => {
-      const options = optionList.filter(opt => opt.fin_prdt_cd === base.fin_prdt_cd);
+      const options = optionList.filter(opt => opt.fin_prdt_cd === base.fin_prdt_cd && opt.fin_co_no === base.fin_co_no);
       const rates = {};
       options.forEach(opt => {
-        if (opt.save_trm === '6') rates['6'] = opt.intr_rate;
-        if (opt.save_trm === '12') rates['12'] = opt.intr_rate;
-        if (opt.save_trm === '24') rates['24'] = opt.intr_rate;
-        if (opt.save_trm === '36') rates['36'] = opt.intr_rate;
+        rates[opt.save_trm] = opt.intr_rate;
       });
 
       return {
-        id: base.fin_prdt_cd,
+        id: `${base.fin_co_no}_${base.fin_prdt_cd}`,
+        fin_co_no: base.fin_co_no, // Store separately for saving
+        fin_prdt_cd: base.fin_prdt_cd, // Store separately for saving
         bank: base.kor_co_nm,
         name: base.fin_prdt_nm,
         rates: rates,
         submitMonth: base.dcls_month,
-        restriction: base.join_deny === '1' ? '제한없음' : (base.join_deny === '2' ? '서민전용' : '일부제한'), // Map join_deny
+        restriction: base.join_deny === '1' ? '제한없음' : (base.join_deny === '2' ? '서민전용' : '일부제한'),
         way: base.join_way,
         special: base.spcl_cnd,
       };
     });
     allProducts.value = combinedProducts;
-    selectedBank.value = 'all'; // Reset filter on new data fetch
-    currentSortOrder.value = 'default'; // Reset sort order on new data fetch
+    selectedBank.value = 'all';
+    currentSortOrder.value = 'default';
   } catch (error) {
     console.error('Failed to fetch products:', error);
     allProducts.value = [];
@@ -225,41 +242,55 @@ const sortProducts = (order) => {
 };
 
 const filterAndSortProducts = () => {
-  // This will automatically re-run the computed property `filteredAndSortedProducts`
-  // No explicit action needed here beyond updating `selectedBank` or `currentSortOrder`
+  // Triggered by bank filter change
 };
 
 const toggleProductDetail = (productId) => {
-  if (expandedProductId.value === productId) {
-    expandedProductId.value = null; // Collapse if already expanded
-  } else {
-    expandedProductId.value = productId; // Expand the clicked product
-    nextTick(() => {
-      // Optional: Scroll to the expanded row if it's off-screen
-      const expandedRow = document.getElementById(`product-row-${productId}`);
-      if (expandedRow) {
-        expandedRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    });
-  }
+  expandedProductId.value = expandedProductId.value === productId ? null : productId;
 };
 
 const formatRate = (rate) => {
-  return rate !== null && rate !== undefined ? rate.toFixed(2) + '%' : '-';
+  return rate !== null && rate !== undefined ? parseFloat(rate).toFixed(2) + '%' : '-';
 };
 
-const joinProduct = (product) => {
-  if (product) {
-    alert(`${product.name} 가입 기능은 준비 중입니다. (상품 ID: ${product.id})`);
+const handleSaveProduct = async (product) => {
+  if (!isLoggedIn.value) {
+    alert('상품을 저장하려면 로그인이 필요합니다.');
+    // Optionally, redirect to login: router.push({ name: 'login' });
+    return;
+  }
+  if (isProductSaved.value(product)) {
+    alert('이미 저장된 상품입니다.');
+    return;
+  }
+
+  const productData = {
+    product_type: currentProductType.value,
+    fin_co_no: product.fin_co_no,
+    fin_prdt_cd: product.fin_prdt_cd,
+    product_name: product.name,
+    bank_name: product.bank,
+    interest_rate_12m: product.rates && product.rates['12'] ? parseFloat(product.rates['12']) : null,
+  };
+
+  try {
+    await saveFinancialProduct(productData);
+    alert('상품이 My Page에 저장되었습니다.');
+    // Refresh user data to update the saved products list in the store
+    await authStore.loadUser();
+  } catch (error) {
+    alert('상품 저장에 실패했습니다. 이미 저장된 상품일 수 있습니다.');
+    console.error("Failed to save product:", error);
   }
 };
 
-import { nextTick } from 'vue'; // Import nextTick
+// joinProduct function removed as the button is removed
 
 onMounted(() => {
+  if (isLoggedIn.value && !authUser.value) { // Ensure authUser is loaded if logged in
+    authStore.loadUser();
+  }
   fetchData();
-  // In a real app, isLoggedIn would come from an auth store
-  // For now, we can simulate it or leave it as false
 });
 </script>
 
@@ -269,6 +300,7 @@ onMounted(() => {
 .hidden {
   display: none !important;
 }
+
 
 /* Override for Vue's v-if/v-show if needed, but v-if is preferred */
 
@@ -319,67 +351,119 @@ onMounted(() => {
 .tab-button:not(.active):hover,
 .sort-button:not(.active):hover {
   background-color: #d1d5db;
-}
 
-.form-select {
-  padding: 0.625rem 2.5rem 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  background-color: white;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 1.5em 1.5em;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
+  =======.tab-button,
+  .sort-button {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    border: 1px solid transparent;
+    text-align: center;
+  }
 
-.form-select:focus {
-  outline: none;
-  border-color: #0d9488;
-  box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
-}
+  .tab-button.active,
+  .sort-button.active {
+    background-color: #0d9488;
+    /* teal-600 */
+    color: white;
+    border-color: #0d9488;
+    /* teal-600 */
+  }
 
-.table-container {
-  overflow-x: auto;
-}
+  .tab-button:not(.active),
+  .sort-button:not(.active) {
+    background-color: #e5e7eb;
+    /* gray-200 */
+    color: #374151;
+    /* gray-700 */
+    border-color: #d1d5db;
+    /* gray-300 */
+  }
 
-.product-table th,
-.product-table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  font-size: 0.875rem;
-  border-bottom: 1px solid #e5e7eb;
-}
+  .tab-button:not(.active):hover,
+  .sort-button:not(.active):hover {
+    background-color: #d1d5db;
+    /* gray-300 */
+  }
 
-.product-table thead th {
-  background-color: #f3f4f6;
-  color: #374151;
-  font-weight: 600;
-}
+  .form-select {
+    padding: 0.625rem 2.5rem 0.625rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
 
-.product-table tbody tr:hover {
-  background-color: #f0fdfa;
-}
+  .form-select:focus {
+    outline: none;
+    border-color: #0d9488;
+    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+    border-color: #0d9488;
+    /* teal-600 */
+    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+    /* ring-teal-500 opacity-25 */
+  }
 
-.product-table .product-name-link {
-  color: #0d9488;
-  cursor: pointer;
-  font-weight: 500;
-}
+  .table-container {
+    overflow-x: auto;
+  }
 
-.product-table .product-name-link:hover {
-  text-decoration: underline;
-}
+  .product-table th,
+  .product-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
 
-.detail-section dt {
-  font-weight: 500;
-  color: #4b5563;
-}
+  .product-table thead th {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+  }
 
-.detail-section dd {
-  color: #1f2937;
-}
-</style>
+  .product-table tbody tr:hover {
+    background-color: #f0fdfa;
+  }
+
+  .product-table .product-name-link {
+    color: #0d9488;
+    background-color: #f0fdfa;
+    /* teal-50 */
+  }
+
+  .product-table .product-name-link {
+    color: #0d9488;
+    /* teal-600 */
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .product-table .product-name-link:hover {
+    text-decoration: underline;
+  }
+
+  .detail-section dt {
+    font-weight: 500;
+    color: #4b5563;
+  }
+
+  .detail-section dd {
+    color: #1f2937;
+    =======color: #4b5563;
+    /* gray-600 */
+  }
+
+  .detail-section dd {
+    color: #1f2937;
+    /* gray-800 */
+  }</style>

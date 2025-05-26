@@ -1,12 +1,11 @@
 <template>
-  <main class="flex-grow container mx-auto px-4 sm:px-6 py-8 md:py-12">
-    <div id="postListSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200"
-      v-if="currentSection === 'postListSection'">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-teal-700">자유 게시판</h1>
+  <main class="flex-grow container mx-auto px-4 sm:px-6 py-6 md:py-8"> {/* Adjusted top padding */}
+    <div id="postListSection" class="board-section p-4 md:p-6" v-if="currentSection === 'postListSection'">
+      <div class="flex justify-between items-center mb-8"> {/* Increased bottom margin */}
+        <h1 class="text-3xl md:text-4xl font-bold text-teal-700">자유 게시판</h1> {/* Increased font size */}
         <button id="createPostBtn"
-          class="bg-teal-600 text-white py-2 px-4 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-500 focus:ring-opacity-50 transition duration-150 ease-in-out text-sm font-medium"
-          @click="showCreatePostForm">
+          class="bg-teal-600 text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-75 transition duration-150 ease-in-out text-base"
+          @click="showCreatePostForm"> {/* Enhanced button style */}
           글쓰기
         </button>
       </div>
@@ -14,27 +13,32 @@
         <table class="w-full table-fixed">
           <thead>
             <tr>
-              <th class="w-1/12">번호</th>
-              <th class="w-6/12">제목</th>
-              <th class="w-2/12">작성자</th>
-              <th class="w-2/12">작성일</th>
-              <th class="w-1/12">조회수</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">번호</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-6/12">제목</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">작성자</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">작성일</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">조회수</th>
             </tr>
           </thead>
-          <tbody id="postList">
+          <tbody id="postList" class="bg-white divide-y divide-gray-200">
             <tr v-if="posts.length === 0">
-              <td colspan="5" class="text-center text-gray-500 py-8">게시글이 없습니다.</td>
+              <td colspan="5" class="py-12 text-center text-gray-500 text-lg">게시글이 없습니다. 새로운 글을 작성해보세요!</td>
             </tr>
-            <tr v-for="post in posts" :key="post.id">
-              <td>{{ post.id }}</td>
-              <td>
-                <a href="#" class="post-title-link" @click.prevent="showPostDetail(post.id)">
-                  {{ post.title }} [{{ post.comments_count }}]
+            <tr v-for="post in posts" :key="post.id" class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="py-4 px-4 whitespace-nowrap text-sm text-gray-700 w-1/12">{{ post.id }}</td>
+              <td class="py-4 px-4 whitespace-nowrap text-sm text-gray-900 w-6/12 truncate">
+                <a href="#" class="text-teal-600 hover:text-teal-800 hover:underline font-medium"
+                  @click.prevent="showPostDetail(post.id)">
+                  {{ post.title }}
+                  <span v-if="post.comments_count > 0" class="text-xs text-gray-500 ml-1">[{{ post.comments_count
+                  }}]</span>
                 </a>
               </td>
-              <td>{{ post.author }}</td>
-              <td>{{ formatDate(post.created_at) }}</td>
-              <td>{{ post.views }}</td>
+              <td class="py-4 px-4 whitespace-nowrap text-sm text-gray-600 w-2/12">{{ post.author_nickname ||
+                post.author }}</td> {/* Assuming author_nickname might be available */}
+              <td class="py-4 px-4 whitespace-nowrap text-sm text-gray-600 w-2/12">{{ formatDate(post.created_at) }}
+              </td>
+              <td class="py-4 px-4 whitespace-nowrap text-sm text-gray-600 w-1/12">{{ post.views }}</td>
             </tr>
           </tbody>
         </table>
@@ -44,47 +48,50 @@
       </div>
     </div>
 
-    <PostDetail v-if="currentSection === 'postDetailSection'" :post="currentPost" :comments="comments"
-      @back-to-list="showPostList" @toggle-like="toggleLike" @toggle-bookmark="toggleBookmark" @edit-post="editPost"
+    <PostDetail v-if="currentSection === 'postDetailSection'" :post="currentPost" :comments="comments" <<<<<<< HEAD
+      @back-to-list="showPostList" @toggle-like="toggleLike" @toggle-bookmark="toggleBookmark"
+      @edit-post="editPost"=======:on-back-to-list="showPostList" @toggle-like="toggleLike"
+      @toggle-bookmark="toggleBookmark" @edit-post="editPost">>>>>>> dev_pillar
       @delete-post="deletePost" @submit-comment="submitComment" @edit-comment="editComment"
       @delete-comment="deleteComment" />
 
-    <div id="postFormSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200"
-      v-if="currentSection === 'postFormSection'">
-      <h1 id="postFormTitle" class="text-2xl md:text-3xl font-bold text-teal-700 mb-6">{{ formModeTitle }}</h1>
-      <form id="postForm" @submit.prevent="submitPost">
-        <div class="mb-4">
-          <label for="postTitleInput" class="block text-sm font-medium text-gray-700 mb-1">제목</label>
-          <input type="text" id="postTitleInput" v-model="postForm.title" class="form-input" required>
-        </div>
-        <div class="mb-6">
-          <label for="postContentInput" class="block text-sm font-medium text-gray-700 mb-1">내용</label>
-          <textarea id="postContentInput" v-model="postForm.content" class="form-textarea" rows="10"
-            required></textarea>
-        </div>
-        <div class="flex justify-end space-x-3">
-          <button type="button" id="cancelPostBtn"
-            class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300" @click="showPostList">취소</button>
-          <button type="submit" id="submitPostBtn"
-            class="bg-teal-600 text-white py-2 px-4 rounded-lg hover:bg-teal-700">{{ formMode === 'create' ? '등록' : '수정'
-            }}</button>
-        </div>
-      </form>
-    </div>
+      <div id="postFormSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200"
+        v-if="currentSection === 'postFormSection'">
+        <h1 id="postFormTitle" class="text-2xl md:text-3xl font-bold text-teal-700 mb-6">{{ formModeTitle }}</h1>
+        <form id="postForm" @submit.prevent="submitPost">
+          <div class="mb-4">
+            <label for="postTitleInput" class="block text-sm font-medium text-gray-700 mb-1">제목</label>
+            <input type="text" id="postTitleInput" v-model="postForm.title" class="form-input" required>
+          </div>
+          <div class="mb-6">
+            <label for="postContentInput" class="block text-sm font-medium text-gray-700 mb-1">내용</label>
+            <textarea id="postContentInput" v-model="postForm.content" class="form-textarea" rows="10"
+              required></textarea>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button type="button" id="cancelPostBtn"
+              class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300" @click="showPostList">취소</button>
+            <button type="submit" id="submitPostBtn"
+              class="bg-teal-600 text-white py-2 px-4 rounded-lg hover:bg-teal-700">{{ formMode === 'create' ? '등록' :
+                '수정'
+              }}</button>
+          </div>
+        </form>
+      </div>
 
-    <div id="loginRequiredSection"
-      class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200 text-center"
-      v-if="currentSection === 'loginRequiredSection'">
-      <h2 class="text-xl font-semibold text-red-600 mb-4">로그인 필요</h2>
-      <p class="text-gray-700 mb-6">글을 작성하거나 댓글을 달려면 로그인이 필요합니다.</p>
-      <router-link to="/login" class="bg-teal-600 text-white py-2 px-6 rounded-lg hover:bg-teal-700 text-sm">로그인 페이지로
-        이동</router-link>
-      <button id="closeLoginRequiredBtn" class="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
-        @click="showPostList">닫기</button>
-    </div>
+      <div id="loginRequiredSection"
+        class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200 text-center"
+        v-if="currentSection === 'loginRequiredSection'">
+        <h2 class="text-xl font-semibold text-red-600 mb-4">로그인 필요</h2>
+        <p class="text-gray-700 mb-6">글을 작성하거나 댓글을 달려면 로그인이 필요합니다.</p>
+        <router-link to="/login" class="bg-teal-600 text-white py-2 px-6 rounded-lg hover:bg-teal-700 text-sm">로그인 페이지로
+          이동</router-link>
+        <button id="closeLoginRequiredBtn" class="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
+          @click="showPostList">닫기</button>
+      </div>
 
   </main>
-  <Footer />
+  <!-- Footer component removed from here, assuming it's in App.vue or a layout component -->
 </template>
 
 <script setup>
@@ -93,7 +100,7 @@ import NavigationBar from '../components/NavigationBar.vue';
 import Footer from '../components/footer.vue';
 import PostDetail from '../components/PostDetail.vue'; // Import PostDetail
 import { useAuthStore } from '../stores/user.js';
-import axios from 'axios';
+import api from '../api/axios'; // Changed from 'axios'
 
 const authStore = useAuthStore();
 const isLoggedIn = computed(() => authStore.isLoggedIn);
@@ -123,12 +130,15 @@ const formModeTitle = computed(() => {
 });
 
 const showBoardSection = (sectionId) => {
+  console.log('[Board.vue] showBoardSection called with:', sectionId);
+  console.log('[Board.vue] currentSection BEFORE change:', currentSection.value);
   currentSection.value = sectionId;
+  console.log('[Board.vue] currentSection AFTER change:', currentSection.value);
 };
 
 const fetchPosts = async (page = 1) => {
   try {
-    const response = await axios.get(`/api/boards/posts/?page=${page}`);
+    const response = await api.get(`/api/boards/posts/?page=${page}`);
     posts.value = response.data.results;
     totalPosts.value = response.data.count;
     nextUrl.value = response.data.next;
@@ -154,7 +164,7 @@ const showCreatePostForm = () => {
 
 const showPostDetail = async (postId) => {
   try {
-    const response = await axios.get(`/api/boards/posts/${postId}/`);
+    const response = await api.get(`/api/boards/posts/${postId}/`);
     currentPost.value = response.data;
     comments.value = response.data.comments; // Assuming comments are nested
     showBoardSection('postDetailSection');
@@ -165,25 +175,19 @@ const showPostDetail = async (postId) => {
 };
 
 const showPostList = () => {
-  fetchPosts(currentPage.value); // Refresh current page when returning
+  console.log('[Board.vue] showPostList called');
+  fetchPosts(currentPage.value); // Restore fetchPosts call
   showBoardSection('postListSection');
+  console.log('[Board.vue] showPostList finished');
 };
 
 const submitPost = async () => {
   try {
     if (formMode.value === 'create') {
-      await axios.post('/api/boards/posts/', postForm, {
-        headers: {
-          Authorization: `Token ${authStore.token}`,
-        },
-      });
+      await api.post('/api/boards/posts/', postForm);
       alert('게시글이 성공적으로 등록되었습니다.');
     } else { // edit mode
-      await axios.put(`/api/boards/posts/${postForm.id}/`, postForm, {
-        headers: {
-          Authorization: `Token ${authStore.token}`,
-        },
-      });
+      await api.put(`/api/boards/posts/${postForm.id}/`, postForm);
       alert('게시글이 성공적으로 수정되었습니다.');
     }
     showPostList();
@@ -207,11 +211,7 @@ const editPost = (postId) => {
 const deletePost = async (postId) => {
   if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
     try {
-      await axios.delete(`/api/boards/posts/${postId}/`, {
-        headers: {
-          Authorization: `Token ${authStore.token}`,
-        },
-      });
+      await api.delete(`/api/boards/posts/${postId}/`);
       alert('게시글이 성공적으로 삭제되었습니다.');
       showPostList();
     } catch (error) {
@@ -231,11 +231,7 @@ const submitComment = async (content) => { // Receive content from emitted event
     return;
   }
   try {
-    await axios.post(`/api/boards/posts/${currentPost.value.id}/comments/`, { content: content }, {
-      headers: {
-        Authorization: `Token ${authStore.token}`,
-      },
-    });
+    await api.post(`/api/boards/posts/${currentPost.value.id}/comments/`, { content: content });
     // newCommentContent.value = ''; // This is now managed by PostDetail
     showPostDetail(currentPost.value.id); // Refresh post detail to show new comment
     alert('댓글이 성공적으로 등록되었습니다.');
@@ -249,11 +245,7 @@ const editComment = async (comment) => {
   const newContent = prompt('댓글을 수정하세요:', comment.content);
   if (newContent !== null && newContent.trim() !== '') {
     try {
-      await axios.put(`/api/boards/posts/${currentPost.value.id}/comments/${comment.id}/`, { content: newContent }, {
-        headers: {
-          Authorization: `Token ${authStore.token}`,
-        },
-      });
+      await api.put(`/api/boards/posts/${currentPost.value.id}/comments/${comment.id}/`, { content: newContent });
       showPostDetail(currentPost.value.id); // Refresh post detail
       alert('댓글이 성공적으로 수정되었습니다.');
     } catch (error) {
@@ -266,11 +258,7 @@ const editComment = async (comment) => {
 const deleteComment = async (commentId) => {
   if (confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
     try {
-      await axios.delete(`/api/boards/posts/${currentPost.value.id}/comments/${commentId}/`, {
-        headers: {
-          Authorization: `Token ${authStore.token}`,
-        },
-      });
+      await api.delete(`/api/boards/posts/${currentPost.value.id}/comments/${commentId}/`);
       showPostDetail(currentPost.value.id); // Refresh post detail
       alert('댓글이 성공적으로 삭제되었습니다.');
     }
@@ -287,12 +275,8 @@ const toggleLike = async (postId) => {
     return;
   }
   try {
-    await axios.post(`/api/boards/posts/${postId}/like/`, {}, {
-      headers: {
-        Authorization: `Token ${authStore.token}`,
-      },
-    });
-    showPostDetail(postId); // Refresh post detail to update like count/status
+    const response = await api.post(`/api/boards/posts/${postId}/like/`, {});
+    currentPost.value = response.data; // Update local post data
   } catch (error) {
     console.error('Error toggling like:', error);
     alert('좋아요 처리에 실패했습니다.');
@@ -305,12 +289,8 @@ const toggleBookmark = async (postId) => {
     return;
   }
   try {
-    await axios.post(`/api/boards/posts/${postId}/bookmark/`, {}, {
-      headers: {
-        Authorization: `Token ${authStore.token}`,
-      },
-    });
-    showPostDetail(postId); // Refresh post detail to update bookmark count/status
+    const response = await api.post(`/api/boards/posts/${postId}/bookmark/`, {});
+    currentPost.value = response.data; // Update local post data
   } catch (error) {
     console.error('Error toggling bookmark:', error);
     alert('북마크 처리에 실패했습니다.');
@@ -354,9 +334,6 @@ const formatDate = (dateString, includeTime = false) => {
 // };
 
 onMounted(() => {
-  localStorage.removeItem('access'); // Ensure access token is cleared
-  authStore.accessToken = null;
-  authStore.user = null;
   fetchPosts();
 });
 </script>

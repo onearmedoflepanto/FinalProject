@@ -56,6 +56,31 @@ export const useAuthStore = defineStore('auth', {
         return { success: false, message: error.response?.data?.error || 'Login failed' }
       }
     },
+    async refreshToken() {
+      const currentRefreshToken = localStorage.getItem('refresh');
+      if (!currentRefreshToken) {
+        await this.logout(); // No refresh token, logout
+        return Promise.reject(new Error('No refresh token available'));
+      }
+      try {
+        const response = await api.post('api/accounts/token/refresh/', {
+          refresh: currentRefreshToken,
+        });
+        this.accessToken = response.data.access;
+        localStorage.setItem('access', this.accessToken);
+        // Django Rest Framework SimpleJWT might also return a new refresh token
+        // if REFRESH_TOKEN_ROTATE is true. Handle if necessary.
+        // if (response.data.refresh) {
+        //   localStorage.setItem('refresh', response.data.refresh);
+        // }
+        console.log('Token refreshed successfully');
+        return this.accessToken;
+      } catch (error) {
+        console.error('Failed to refresh token:', error.response ? error.response.data : error.message);
+        await this.logout(); // Refresh failed, logout
+        return Promise.reject(error);
+      }
+    },
     async logout() {
       const refreshToken = localStorage.getItem('refresh')
       localStorage.removeItem('access')
@@ -100,6 +125,7 @@ export const useAuthStore = defineStore('auth', {
           console.error('Failed to load user:', error.response ? error.response.data : error.message)
           if (error.response && error.response.status === 401) {
             await this.logout()
+
           }
           this.user = null
         }

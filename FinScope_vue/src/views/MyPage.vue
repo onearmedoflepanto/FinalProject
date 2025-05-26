@@ -93,18 +93,17 @@
 
         <div v-if="activeSection === 'myPostsSection'" class="content-section">
           <h2 class="text-2xl font-semibold mb-6 text-gray-800 border-b-2 border-indigo-500 pb-3">내가 작성한 활동</h2>
+          
           <div class="mb-8">
             <h3 class="sub-section-title">내가 작성한 게시글</h3>
             <div class="space-y-4 max-h-[250px] overflow-y-auto pr-2">
-              <!-- Placeholder for user's board posts -->
-              <div v-if="myBoardPosts.length === 0" class="text-gray-500 p-4 text-center">작성한 게시글이 없습니다.</div>
+              <div v-if="!myBoardPosts || myBoardPosts.length === 0" class="text-gray-500 p-4 text-center">작성한 게시글이 없습니다.</div>
               <div v-for="post in myBoardPosts" :key="post.id" class="list-item">
-                <h3>{{ post.title }}</h3>
-                <p class="content-preview truncate">{{ post.contentPreview }}</p>
+                <h3 class="text-teal-600 hover:text-teal-700"><router-link :to="{ name: 'board-detail', params: { id: post.id } }">{{ post.title }}</router-link></h3>
+                <p class="content-preview text-gray-600 text-sm whitespace-pre-wrap">{{ truncateText(post.content, 100) }}</p>
                 <div class="details mt-1 flex justify-between items-center">
-                  <p class="text-xs text-gray-500">게시판: <span>{{ post.boardName }}</span></p>
-                  <p class="text-xs text-gray-500">작성일: <span>{{ post.date }}</span></p>
-                  <router-link :to="`/board/${post.id}`" class="text-xs text-teal-600 hover:underline">자세히 보기 &rarr;</router-link>
+                  <p class="text-xs text-gray-500">작성일: <span>{{ formatDate(post.created_at) }}</span></p>
+                  <router-link :to="{ name: 'board-detail', params: { id: post.id } }" class="text-xs text-teal-600 hover:underline font-medium">자세히 보기 &rarr;</router-link>
                 </div>
               </div>
             </div>
@@ -112,15 +111,13 @@
           <div>
             <h3 class="sub-section-title">내가 작성한 댓글</h3>
             <div class="space-y-4 max-h-[250px] overflow-y-auto pr-2">
-              <!-- Placeholder for user's comments -->
-              <div v-if="myComments.length === 0" class="text-gray-500 p-4 text-center">작성한 댓글이 없습니다.</div>
+              <div v-if="!myComments || myComments.length === 0" class="text-gray-500 p-4 text-center">작성한 댓글이 없습니다.</div>
               <div v-for="comment in myComments" :key="comment.id" class="list-item">
-                <h4>댓글 단 게시글: <span>{{ comment.postTitle }}</span></h4>
-                <p class="content-preview truncate">{{ comment.contentPreview }}</p>
+                <h4 class="text-gray-700">댓글 단 게시글: <router-link :to="{ name: 'board-detail', params: { id: comment.post } }" class="text-indigo-600 hover:text-indigo-700 hover:underline">{{ comment.post_title }}</router-link></h4>
+                <p class="content-preview text-gray-600 text-sm whitespace-pre-wrap">{{ truncateText(comment.content, 100) }}</p>
                 <div class="details mt-1 flex justify-between items-center">
-                  <p class="text-xs text-gray-500">게시판: <span>{{ comment.boardName }}</span></p>
-                  <p class="text-xs text-gray-500">작성일: <span>{{ comment.date }}</span></p>
-                  <router-link :to="`/board/${comment.postId}`" class="text-xs text-teal-600 hover:underline">원문 보기 &rarr;</router-link>
+                  <p class="text-xs text-gray-500">작성일: <span>{{ formatDate(comment.created_at) }}</span></p>
+                  <router-link :to="{ name: 'board-detail', params: { id: comment.post } }" class="text-xs text-teal-600 hover:underline font-medium">원문 보기 &rarr;</router-link>
                 </div>
               </div>
             </div>
@@ -197,6 +194,22 @@ const populateEditForm = () => {
   editData.currentPassword = '';
   editData.newPassword = '';
   editData.confirmNewPassword = '';
+};
+
+const formatDate = (dateString, includeTime = false) => {
+  if (!dateString) return '';
+  const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+  if (includeTime) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+  }
+  return new Date(dateString).toLocaleDateString('ko-KR', options);
+};
+
+const truncateText = (text, maxLength = 100) => {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
 };
 
 const cancelEdit = () => {
@@ -375,6 +388,10 @@ watch(authUser, (newUser) => {
     userData.assets = newUser.assets || null; // These fields might be named differently or not exist on your User model
     userData.salary = newUser.salary || null; // Adjust according to your UserSerializer in Django
     userData.savingsTendency = newUser.savings_tendency || newUser.savingsTendency || ''; // Check field name from serializer
+    
+    // Populate authored posts and comments
+    myBoardPosts.value = newUser.authored_posts || [];
+    myComments.value = newUser.authored_comments || [];
     
     populateEditForm(); // Update edit form as well
   } else {
