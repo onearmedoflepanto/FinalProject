@@ -1,5 +1,4 @@
 <template>
-  <Navbar />
   <main class="flex-grow container mx-auto px-4 sm:px-6 py-8 md:py-12">
     <div id="productListSection" class="page-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200">
       <h1 class="text-2xl md:text-3xl font-bold text-teal-700 mb-6 text-center">예금 및 적금 금리 비교</h1>
@@ -7,26 +6,19 @@
       <div class="mb-6 space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div class="flex space-x-2">
-            <button
-              id="depositTabBtn"
-              class="tab-button"
-              :class="{ active: currentProductType === 'deposit' }"
-              @click="selectProductType('deposit')"
-            >
+            <button id="depositTabBtn" class="tab-button" :class="{ active: currentProductType === 'deposit' }"
+              @click="selectProductType('deposit')">
               정기예금
             </button>
-            <button
-              id="savingsTabBtn"
-              class="tab-button"
-              :class="{ active: currentProductType === 'savings' }"
-              @click="selectProductType('savings')"
-            >
+            <button id="savingsTabBtn" class="tab-button" :class="{ active: currentProductType === 'savings' }"
+              @click="selectProductType('savings')">
               정기적금
             </button>
           </div>
           <div class="w-full sm:w-auto">
             <label for="bankFilter" class="sr-only">은행 선택</label>
-            <select id="bankFilter" class="form-select w-full sm:w-64" v-model="selectedBank" @change="filterAndSortProducts">
+            <select id="bankFilter" class="form-select w-full sm:w-64" v-model="selectedBank"
+              @change="filterAndSortProducts">
               <option value="all">전체 은행</option>
               <option v-for="bankName in sortedBanks" :key="bankName" :value="bankName">{{ bankName }}</option>
             </select>
@@ -34,28 +26,16 @@
         </div>
         <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2 pt-2">
           <span class="text-sm font-medium text-gray-700 mr-2">정렬:</span>
-          <button
-            id="sortHighToLowBtn"
-            class="sort-button"
-            :class="{ active: currentSortOrder === 'highToLow' }"
-            @click="sortProducts('highToLow')"
-          >
+          <button id="sortHighToLowBtn" class="sort-button" :class="{ active: currentSortOrder === 'highToLow' }"
+            @click="sortProducts('highToLow')">
             높은 금리순
           </button>
-          <button
-            id="sortLowToHighBtn"
-            class="sort-button"
-            :class="{ active: currentSortOrder === 'lowToHigh' }"
-            @click="sortProducts('lowToHigh')"
-          >
+          <button id="sortLowToHighBtn" class="sort-button" :class="{ active: currentSortOrder === 'lowToHigh' }"
+            @click="sortProducts('lowToHigh')">
             낮은 금리순
           </button>
-          <button
-            id="resetSortBtn"
-            class="sort-button"
-            :class="{ active: currentSortOrder === 'default' }"
-            @click="sortProducts('default')"
-          >
+          <button id="resetSortBtn" class="sort-button" :class="{ active: currentSortOrder === 'default' }"
+            @click="sortProducts('default')">
             정렬 초기화
           </button>
         </div>
@@ -92,16 +72,32 @@
                   <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div class="flex justify-between items-center mb-4">
                       <h2 class="text-xl font-bold text-teal-700">{{ product.name }} 상세 정보</h2>
-                      <button class="bg-gray-500 text-white py-1.5 px-3 rounded-lg hover:bg-gray-600 text-sm" @click="toggleProductDetail(null)">
+                      <button class="bg-gray-500 text-white py-1.5 px-3 rounded-lg hover:bg-gray-600 text-sm"
+                        @click="toggleProductDetail(null)">
                         닫기
                       </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 detail-section">
-                      <div><dt>공시 제출월</dt><dd>{{ product.submitMonth }}</dd></div>
-                      <div><dt>금융회사명</dt><dd>{{ product.bank }}</dd></div>
-                      <div><dt>가입제한</dt><dd>{{ product.restriction }}</dd></div>
-                      <div><dt>가입방법</dt><dd>{{ product.way }}</dd></div>
-                      <div class="md:col-span-2"><dt>우대조건</dt><dd class="whitespace-pre-line">{{ product.special || '특별 우대 조건 없음' }}</dd></div>
+                      <div>
+                        <dt>공시 제출월</dt>
+                        <dd>{{ product.submitMonth }}</dd>
+                      </div>
+                      <div>
+                        <dt>금융회사명</dt>
+                        <dd>{{ product.bank }}</dd>
+                      </div>
+                      <div>
+                        <dt>가입제한</dt>
+                        <dd>{{ product.restriction }}</dd>
+                      </div>
+                      <div>
+                        <dt>가입방법</dt>
+                        <dd>{{ product.way }}</dd>
+                      </div>
+                      <div class="md:col-span-2">
+                        <dt>우대조건</dt>
+                        <dd class="whitespace-pre-line">{{ product.special || '특별 우대 조건 없음' }}</dd>
+                      </div>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">금리 정보 (세전)</h3>
                     <div class="space-y-1 detail-section">
@@ -111,7 +107,8 @@
                       </p>
                     </div>
                     <div class="mt-6 text-center" :class="{ hidden: !isLoggedIn }">
-                      <button class="bg-teal-600 text-white py-2.5 px-6 rounded-lg hover:bg-teal-700 font-medium" @click="joinProduct(product)">
+                      <button class="bg-teal-600 text-white py-2.5 px-6 rounded-lg hover:bg-teal-700 font-medium"
+                        @click="joinProduct(product)">
                         가입하기
                       </button>
                     </div>
@@ -132,7 +129,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { fetchDepositProducts, fetchSavingsProducts } from '@/api/depositSavingsApi'; // Adjust path if needed
-import Navbar from '@/components/navbar.vue';
+import NavigationBar from '@/components/NavigationBar.vue';
 
 const isLoggedIn = ref(false); // This should be managed by a global state/store in a real app
 const currentProductType = ref('deposit');
@@ -269,95 +266,120 @@ onMounted(() => {
 <style scoped>
 /* Tailwind CSS is typically handled by postcss/tailwind.config.js */
 /* Custom styles from deposit_savings.html that are not pure Tailwind classes */
-.hidden { display: none !important; } /* Override for Vue's v-if/v-show if needed, but v-if is preferred */
+.hidden {
+  display: none !important;
+}
+
+/* Override for Vue's v-if/v-show if needed, but v-if is preferred */
 
 .menu-bar a {
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.375rem;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  white-space: nowrap;
 }
+
 .menu-bar a:hover {
-    background-color: #f0fdfa;
-    color: #0d9488;
+  background-color: #f0fdfa;
+  color: #0d9488;
 }
+
 .menu-bar a.active {
-    color: #0d9488;
-    font-weight: 600;
-    border-bottom: 2px solid #0d9488;
-    padding-bottom: calc(0.5rem - 2px);
+  color: #0d9488;
+  font-weight: 600;
+  border-bottom: 2px solid #0d9488;
+  padding-bottom: calc(0.5rem - 2px);
 }
-.tab-button, .sort-button {
-    padding: 0.625rem 1.25rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-    border: 1px solid transparent;
-    text-align: center;
+
+.tab-button,
+.sort-button {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  border: 1px solid transparent;
+  text-align: center;
 }
-.tab-button.active, .sort-button.active {
-    background-color: #0d9488;
-    color: white;
-    border-color: #0d9488;
+
+.tab-button.active,
+.sort-button.active {
+  background-color: #0d9488;
+  color: white;
+  border-color: #0d9488;
 }
-.tab-button:not(.active), .sort-button:not(.active) {
-    background-color: #e5e7eb;
-    color: #374151;
-    border-color: #d1d5db;
+
+.tab-button:not(.active),
+.sort-button:not(.active) {
+  background-color: #e5e7eb;
+  color: #374151;
+  border-color: #d1d5db;
 }
-.tab-button:not(.active):hover, .sort-button:not(.active):hover {
-    background-color: #d1d5db;
+
+.tab-button:not(.active):hover,
+.sort-button:not(.active):hover {
+  background-color: #d1d5db;
 }
+
 .form-select {
-    padding: 0.625rem 2.5rem 0.625rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    background-color: white;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 1.5em 1.5em;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  padding: 0.625rem 2.5rem 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1.5em 1.5em;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
+
 .form-select:focus {
-    outline: none;
-    border-color: #0d9488;
-    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
 }
+
 .table-container {
-    overflow-x: auto;
+  overflow-x: auto;
 }
-.product-table th, .product-table td {
-    padding: 0.75rem 1rem;
-    text-align: left;
-    font-size: 0.875rem;
-    border-bottom: 1px solid #e5e7eb;
+
+.product-table th,
+.product-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
 }
+
 .product-table thead th {
-    background-color: #f3f4f6;
-    color: #374151;
-    font-weight: 600;
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
 }
+
 .product-table tbody tr:hover {
-    background-color: #f0fdfa;
+  background-color: #f0fdfa;
 }
+
 .product-table .product-name-link {
-    color: #0d9488;
-    cursor: pointer;
-    font-weight: 500;
+  color: #0d9488;
+  cursor: pointer;
+  font-weight: 500;
 }
+
 .product-table .product-name-link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
+
 .detail-section dt {
-    font-weight: 500;
-    color: #4b5563;
+  font-weight: 500;
+  color: #4b5563;
 }
+
 .detail-section dd {
-    color: #1f2937;
+  color: #1f2937;
 }
 </style>

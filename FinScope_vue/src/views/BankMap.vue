@@ -1,101 +1,101 @@
 <style scoped>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
-    main {
-      flex-grow: 1;
-    }
+main {
+  flex-grow: 1;
+}
 
-    .hidden {
-      display: none !important;
-    }
+.hidden {
+  display: none !important;
+}
 
-    /* Navbar styles from other pages */
-    .menu-bar a {
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.375rem;
-      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-      white-space: nowrap;
-    }
+/* Navbar styles from other pages */
+.menu-bar a {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  white-space: nowrap;
+}
 
-    .menu-bar a:hover {
-      background-color: #f0fdfa;
-      /* teal-50 */
-      color: #0d9488;
-      /* teal-600 */
-    }
+.menu-bar a:hover {
+  background-color: #f0fdfa;
+  /* teal-50 */
+  color: #0d9488;
+  /* teal-600 */
+}
 
-    .menu-bar a.active {
-      color: #0d9488;
-      /* teal-600 */
-      font-weight: 600;
-      /* semibold */
-      border-bottom: 2px solid #0d9488;
-      padding-bottom: calc(0.5rem - 2px);
-    }
+.menu-bar a.active {
+  color: #0d9488;
+  /* teal-600 */
+  font-weight: 600;
+  /* semibold */
+  border-bottom: 2px solid #0d9488;
+  padding-bottom: calc(0.5rem - 2px);
+}
 
-    /* Form element styling consistent with other pages */
-    .form-label {
-      display: block;
-      margin-bottom: 0.25rem;
-      /* mb-1 */
-      font-size: 0.875rem;
-      /* text-sm */
-      font-weight: 500;
-      /* font-medium */
-      color: #374151;
-      /* text-gray-700 */
-    }
+/* Form element styling consistent with other pages */
+.form-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  /* mb-1 */
+  font-size: 0.875rem;
+  /* text-sm */
+  font-weight: 500;
+  /* font-medium */
+  color: #374151;
+  /* text-gray-700 */
+}
 
-    .form-select {
-      width: 100%;
-      padding: 0.625rem 0.75rem;
-      /* Adjusted padding for select */
-      border: 1px solid #d1d5db;
-      /* gray-300 */
-      border-radius: 0.375rem;
-      /* rounded-md */
-      background-color: white;
-      box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-      -webkit-appearance: none;
-      /* For custom arrow, if added */
-      -moz-appearance: none;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.5rem center;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-      /* Make space for arrow */
-    }
+.form-select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  /* Adjusted padding for select */
+  border: 1px solid #d1d5db;
+  /* gray-300 */
+  border-radius: 0.375rem;
+  /* rounded-md */
+  background-color: white;
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  -webkit-appearance: none;
+  /* For custom arrow, if added */
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  /* Make space for arrow */
+}
 
-    .form-select:focus {
-      outline: none;
-      border-color: #0d9488;
-      /* teal-600 */
-      box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
-      /* teal-600 focus ring */
-    }
+.form-select:focus {
+  outline: none;
+  border-color: #0d9488;
+  /* teal-600 */
+  box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+  /* teal-600 focus ring */
+}
 
-    .map-container-custom {
-      /* Renamed to avoid conflict with potential Tailwind class */
-      min-height: 600px; /* Adjusted height for larger map */
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      /* gray-200 */
-      border-radius: 0.5rem;
-      /* rounded-lg */
-    }
-  </style>
+.map-container-custom {
+  /* Renamed to avoid conflict with potential Tailwind class */
+  min-height: 600px;
+  /* Adjusted height for larger map */
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  /* gray-200 */
+  border-radius: 0.5rem;
+  /* rounded-lg */
+}
+</style>
 
 <template>
-  <navbar />
   <main class="flex-grow container mx-auto px-4 sm:px-6 py-8 md:py-12">
     <div class="bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200">
       <h1 class="text-2xl md:text-3xl font-bold text-teal-700 mb-8 text-center">은행 지도 검색</h1>
@@ -139,10 +139,11 @@
         <div class="md:col-span-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
           <h4 class="text-lg font-semibold text-gray-700 mb-3 text-center">은행 위치 및 경로</h4>
           <div ref="map1El" class="map-container-custom"></div>
-          
+
           <div class="mt-4 flex justify-center space-x-4">
             <label class="inline-flex items-center">
-              <input type="radio" class="form-radio text-teal-600" name="transport" value="car" v-model="selectedTransportType">
+              <input type="radio" class="form-radio text-teal-600" name="transport" value="car"
+                v-model="selectedTransportType">
               <span class="ml-2 text-gray-700">자동차</span>
             </label>
           </div>
@@ -157,7 +158,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import res from '@/assets/data.json'
-import navbar from '@/components/navbar.vue'
+import NavigationBar from '@/components/NavigationBar.vue'
 
 const selectedRegion = ref('')
 const selectedCity = ref('')
@@ -179,11 +180,11 @@ const destinationCoords = ref(null); // Store destination for re-requesting dire
 const destinationName = ref(''); // Store destination name
 
 function initializeMaps() {
-  const defaultCenter = new kakao.maps.LatLng(37.566826, 126.9786567);
-  map1.value = new kakao.maps.Map(map1El.value, { center: defaultCenter, level: 5 });
+  const defaultCenter = new window.kakao.maps.LatLng(37.566826, 126.9786567);
+  map1.value = new window.kakao.maps.Map(map1El.value, { center: defaultCenter, level: 5 });
   console.log('Kakao map initialized:', map1.value);
   // Ensure the map is properly displayed after initialization
-  kakao.maps.event.addListener(map1.value, 'tilesloaded', function() {
+  window.kakao.maps.event.addListener(map1.value, 'tilesloaded', function () {
     console.log('Map tiles loaded, calling relayout.');
     map1.value.relayout();
   });
@@ -194,17 +195,17 @@ function initializeMaps() {
       (position) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        currentPosition.value = new kakao.maps.LatLng(lat, lon);
+        currentPosition.value = new window.kakao.maps.LatLng(lat, lon);
 
         // Add current location marker to map1
-        currentLocationMarker.value = new kakao.maps.Marker({
+        currentLocationMarker.value = new window.kakao.maps.Marker({
           map: map1.value,
           position: currentPosition.value,
           title: '현재 위치',
-          image: new kakao.maps.MarkerImage(
+          image: new window.kakao.maps.MarkerImage(
             'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-            new kakao.maps.Size(31, 35),
-            { offset: new kakao.maps.Point(13, 34) }
+            new window.kakao.maps.Size(31, 35),
+            { offset: new window.kakao.maps.Point(13, 34) }
           )
         });
         map1.value.setCenter(currentPosition.value); // Center map on current location
@@ -212,15 +213,15 @@ function initializeMaps() {
       (error) => {
         console.error('Error getting current location:', error);
         alert('현재 위치를 가져올 수 없습니다. 기본 위치로 설정합니다.');
-        currentPosition.value = new kakao.maps.LatLng(37.5012743, 127.039585); // Fallback
-        currentLocationMarker.value = new kakao.maps.Marker({
+        currentPosition.value = new window.kakao.maps.LatLng(37.5012743, 127.039585); // Fallback
+        currentLocationMarker.value = new window.kakao.maps.Marker({
           map: map1.value,
           position: currentPosition.value,
           title: '현재 위치 (기본값)',
-          image: new kakao.maps.MarkerImage(
+          image: new window.kakao.maps.MarkerImage(
             'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-            new kakao.maps.Size(31, 35),
-            { offset: new kakao.maps.Point(13, 34) }
+            new window.kakao.maps.Size(31, 35),
+            { offset: new window.kakao.maps.Point(13, 34) }
           )
         });
         map1.value.setCenter(currentPosition.value); // Center map on fallback location
@@ -228,15 +229,15 @@ function initializeMaps() {
     );
   } else {
     alert('이 브라우저에서는 Geolocation이 지원되지 않습니다. 기본 위치로 설정합니다.');
-    currentPosition.value = new kakao.maps.LatLng(37.5012743, 127.039585); // Fallback
-    currentLocationMarker.value = new kakao.maps.Marker({
+    currentPosition.value = new window.kakao.maps.LatLng(37.5012743, 127.039585); // Fallback
+    currentLocationMarker.value = new window.kakao.maps.Marker({
       map: map1.value,
       position: currentPosition.value,
       title: '현재 위치 (기본값)',
-      image: new kakao.maps.MarkerImage(
+      image: new window.kakao.maps.MarkerImage(
         'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-        new kakao.maps.Size(31, 35),
-        { offset: new kakao.maps.Point(13, 34) }
+        new window.kakao.maps.Size(31, 35),
+        { offset: new window.kakao.maps.Point(13, 34) }
       )
     });
     map1.value.setCenter(currentPosition.value); // Center map on fallback location
@@ -259,19 +260,19 @@ async function loadDropdownData() {
       updateCities()
     }
     selectedBank.value = data.bankInfo[0] || ''
-  } catch (err) {
+  } catch { // Removed unused 'err'
     alert("데이터 로드 실패: data.json을 확인하세요.")
   }
 }
 
 function searchBank() {
-  const places = new kakao.maps.services.Places()
+  const places = new window.kakao.maps.services.Places()
   const keyword = `${selectedRegion.value} ${selectedCity.value} ${selectedBank.value}`
 
   places.keywordSearch(keyword, (result, status) => {
-    if (status === kakao.maps.services.Status.OK && result.length > 0) {
+    if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
       const place = result[0]
-      const coords = new kakao.maps.LatLng(place.y, place.x)
+      const coords = new window.kakao.maps.LatLng(place.y, place.x)
 
       if (currentMarker.value) {
         currentMarker.value.setMap(null)
@@ -279,9 +280,9 @@ function searchBank() {
 
       map1.value.setCenter(coords);
       map1.value.setLevel(4);
-      currentMarker.value = new kakao.maps.Marker({ map: map1.value, position: coords });
+      currentMarker.value = new window.kakao.maps.Marker({ map: map1.value, position: coords });
 
-      const infowindow = new kakao.maps.InfoWindow({
+      const infowindow = new window.kakao.maps.InfoWindow({
         content: `<div style="padding:5px;font-size:12px;min-width:150px;">${place.place_name}</div>`,
       });
       infowindow.open(map1.value, currentMarker.value);
@@ -359,14 +360,14 @@ async function requestDirections(destinationLatLng, destinationName, transportTy
     routes[0].sections.forEach(section => {
       section.roads.forEach(road => {
         for (let i = 0; i < road.vertexes.length; i += 2) {
-          linePath.push(new kakao.maps.LatLng(road.vertexes[i + 1], road.vertexes[i]));
+          linePath.push(new window.kakao.maps.LatLng(road.vertexes[i + 1], road.vertexes[i]));
         }
       });
     });
 
     if (currentPolyline.value) currentPolyline.value.setMap(null);
 
-    currentPolyline.value = new kakao.maps.Polyline({
+    currentPolyline.value = new window.kakao.maps.Polyline({
       map: map1.value, // Draw on map1
       path: linePath,
       strokeWeight: 5,
@@ -375,7 +376,7 @@ async function requestDirections(destinationLatLng, destinationName, transportTy
     });
     console.log('Polyline created and added to map:', currentPolyline.value);
 
-    const bounds = new kakao.maps.LatLngBounds();
+    const bounds = new window.kakao.maps.LatLngBounds();
     bounds.extend(currentPosition.value);
     linePath.forEach(latlng => bounds.extend(latlng));
     map1.value.setBounds(bounds); // Adjust map1 bounds

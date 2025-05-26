@@ -1,6 +1,5 @@
 <template>
   <div class="bg-white text-gray-800">
-    <navbar />
     <main id="mainPage" class="pt-0">
       <div class="carousel-container" @mouseenter="pauseCarousel" @mouseleave="startCarousel">
         <div class="carousel-content-overlay" :key="currentSlide">
@@ -62,7 +61,7 @@ import exchangeRateChart from "@/components/exchangeRateChart.vue"
 </script>
 
 <script>
-import navbar from '@/components/navbar.vue'
+import NavigationBar from '@/components/NavigationBar.vue'
 import img1 from '@/assets/images/finance_01.jpg'
 import img2 from '@/assets/images/finance_02.jpg'
 import img3 from '@/assets/images/finance_03.jpg'
@@ -71,7 +70,7 @@ import axios from 'axios'
 
 export default {
   components: {
-    navbar,
+    NavigationBar,
   },
   data() {
     return {
@@ -130,7 +129,8 @@ export default {
   position: relative;
   width: 100%;
   overflow: hidden;
-  height: 65vh; /* Ensure the container has a height */
+  height: 65vh;
+  /* Ensure the container has a height */
 }
 
 .carousel-slide {
@@ -140,12 +140,14 @@ export default {
   width: 100%;
   opacity: 0;
   transition: opacity 0.7s ease-in-out;
-  visibility: hidden; /* Hide non-active slides */
+  visibility: hidden;
+  /* Hide non-active slides */
 }
 
 .carousel-slide.active {
   opacity: 1;
-  visibility: visible; /* Show active slide */
+  visibility: visible;
+  /* Show active slide */
 }
 
 .carousel-slide img {
@@ -195,7 +197,8 @@ export default {
 
 .carousel-content-overlay h1,
 .carousel-content-overlay p {
-  animation: fadeInSlideUp 0.7s ease-out forwards; /* Apply animation */
+  animation: fadeInSlideUp 0.7s ease-out forwards;
+  /* Apply animation */
 }
 
 @keyframes fadeInSlideUp {
@@ -203,6 +206,7 @@ export default {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

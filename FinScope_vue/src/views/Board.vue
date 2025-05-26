@@ -1,14 +1,12 @@
 <template>
-  <Navbar />
   <main class="flex-grow container mx-auto px-4 sm:px-6 py-8 md:py-12">
-    <div id="postListSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200" v-if="currentSection === 'postListSection'">
+    <div id="postListSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200"
+      v-if="currentSection === 'postListSection'">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl md:text-3xl font-bold text-teal-700">자유 게시판</h1>
-        <button
-          id="createPostBtn"
+        <button id="createPostBtn"
           class="bg-teal-600 text-white py-2 px-4 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-500 focus:ring-opacity-50 transition duration-150 ease-in-out text-sm font-medium"
-          @click="showCreatePostForm"
-        >
+          @click="showCreatePostForm">
           글쓰기
         </button>
       </div>
@@ -46,22 +44,14 @@
       </div>
     </div>
 
-    <PostDetail 
-      v-if="currentSection === 'postDetailSection'"
-      :post="currentPost"
-      :comments="comments"
-      @back-to-list="showPostList"
-      @toggle-like="toggleLike"
-      @toggle-bookmark="toggleBookmark"
-      @edit-post="editPost"
-      @delete-post="deletePost"
-      @submit-comment="submitComment"
-      @edit-comment="editComment"
-      @delete-comment="deleteComment"
-    />
+    <PostDetail v-if="currentSection === 'postDetailSection'" :post="currentPost" :comments="comments"
+      @back-to-list="showPostList" @toggle-like="toggleLike" @toggle-bookmark="toggleBookmark" @edit-post="editPost"
+      @delete-post="deletePost" @submit-comment="submitComment" @edit-comment="editComment"
+      @delete-comment="deleteComment" />
 
-    <div id="postFormSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200" v-if="currentSection === 'postFormSection'">
-      <h1 id="postFormTitle" class="text-2xl md:text-3xl font-bold text-teal-700 mb-6">{{ formMode === 'create' ? '새 글 작성' : '글 수정' }}</h1>
+    <div id="postFormSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200"
+      v-if="currentSection === 'postFormSection'">
+      <h1 id="postFormTitle" class="text-2xl md:text-3xl font-bold text-teal-700 mb-6">{{ formModeTitle }}</h1>
       <form id="postForm" @submit.prevent="submitPost">
         <div class="mb-4">
           <label for="postTitleInput" class="block text-sm font-medium text-gray-700 mb-1">제목</label>
@@ -69,20 +59,28 @@
         </div>
         <div class="mb-6">
           <label for="postContentInput" class="block text-sm font-medium text-gray-700 mb-1">내용</label>
-          <textarea id="postContentInput" v-model="postForm.content" class="form-textarea" rows="10" required></textarea>
+          <textarea id="postContentInput" v-model="postForm.content" class="form-textarea" rows="10"
+            required></textarea>
         </div>
         <div class="flex justify-end space-x-3">
-          <button type="button" id="cancelPostBtn" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300" @click="showPostList">취소</button>
-          <button type="submit" id="submitPostBtn" class="bg-teal-600 text-white py-2 px-4 rounded-lg hover:bg-teal-700">{{ formMode === 'create' ? '등록' : '수정' }}</button>
+          <button type="button" id="cancelPostBtn"
+            class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300" @click="showPostList">취소</button>
+          <button type="submit" id="submitPostBtn"
+            class="bg-teal-600 text-white py-2 px-4 rounded-lg hover:bg-teal-700">{{ formMode === 'create' ? '등록' : '수정'
+            }}</button>
         </div>
       </form>
     </div>
 
-    <div id="loginRequiredSection" class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200 text-center" v-if="currentSection === 'loginRequiredSection'">
+    <div id="loginRequiredSection"
+      class="board-section bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200 text-center"
+      v-if="currentSection === 'loginRequiredSection'">
       <h2 class="text-xl font-semibold text-red-600 mb-4">로그인 필요</h2>
       <p class="text-gray-700 mb-6">글을 작성하거나 댓글을 달려면 로그인이 필요합니다.</p>
-      <router-link to="/login" class="bg-teal-600 text-white py-2 px-6 rounded-lg hover:bg-teal-700 text-sm">로그인 페이지로 이동</router-link>
-      <button id="closeLoginRequiredBtn" class="mt-4 text-sm text-gray-500 hover:text-gray-700 underline" @click="showPostList">닫기</button>
+      <router-link to="/login" class="bg-teal-600 text-white py-2 px-6 rounded-lg hover:bg-teal-700 text-sm">로그인 페이지로
+        이동</router-link>
+      <button id="closeLoginRequiredBtn" class="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
+        @click="showPostList">닫기</button>
     </div>
 
   </main>
@@ -91,7 +89,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
-import Navbar from '../components/navbar.vue';
+import NavigationBar from '../components/NavigationBar.vue';
 import Footer from '../components/footer.vue';
 import PostDetail from '../components/PostDetail.vue'; // Import PostDetail
 import { useAuthStore } from '../stores/user.js';
@@ -103,7 +101,7 @@ const isLoggedIn = computed(() => authStore.isLoggedIn);
 const posts = ref([]);
 const currentPost = ref({});
 const comments = ref([]);
-const newCommentContent = ref(''); // This will be managed by PostDetail now, but keep for now if needed for submitComment directly
+// const newCommentContent = ref(''); // Removed as it's managed by PostDetail
 const postForm = reactive({
   id: null,
   title: '',
@@ -116,9 +114,13 @@ const currentSection = ref('postListSection'); // Controls which section is visi
 // Pagination state
 const totalPosts = ref(0);
 const currentPage = ref(1);
-const pageSize = 10; // Matches backend page size
+// const pageSize = 10; // Removed as not used directly, totalPages was also removed
 const nextUrl = ref(null);
 const previousUrl = ref(null);
+
+const formModeTitle = computed(() => {
+  return formMode.value === 'create' ? '새 글 작성' : '글 수정';
+});
 
 const showBoardSection = (sectionId) => {
   currentSection.value = sectionId;
@@ -301,7 +303,7 @@ const toggleBookmark = async (postId) => {
   if (!isLoggedIn.value) {
     showBoardSection('loginRequiredSection');
     return;
-    }
+  }
   try {
     await axios.post(`/api/boards/posts/${postId}/bookmark/`, {}, {
       headers: {
@@ -327,29 +329,29 @@ const formatDate = (dateString, includeTime = false) => {
 };
 
 // Pagination methods
-const totalPages = computed(() => Math.ceil(totalPosts.value / pageSize));
+// const totalPages = computed(() => Math.ceil(totalPosts.value / pageSize)); // Removed as not used in template
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    fetchPosts(page);
-  }
-};
+// const goToPage = (page) => { // Removed as not used in template
+//   if (page >= 1 && page <= totalPages.value) {
+//     fetchPosts(page);
+//   }
+// };
 
-const nextPage = () => {
-  if (nextUrl.value) {
-    const url = new URL(nextUrl.value);
-    const page = url.searchParams.get('page');
-    fetchPosts(parseInt(page));
-  }
-};
+// const nextPage = () => { // Removed as not used in template
+//   if (nextUrl.value) {
+//     const url = new URL(nextUrl.value);
+//     const page = url.searchParams.get('page');
+//     fetchPosts(parseInt(page));
+//   }
+// };
 
-const previousPage = () => {
-  if (previousUrl.value) {
-    const url = new URL(previousUrl.value);
-    const page = url.searchParams.get('page');
-    fetchPosts(parseInt(page));
-  }
-};
+// const previousPage = () => { // Removed as not used in template
+//   if (previousUrl.value) {
+//     const url = new URL(previousUrl.value);
+//     const page = url.searchParams.get('page');
+//     fetchPosts(parseInt(page));
+//   }
+// };
 
 onMounted(() => {
   localStorage.removeItem('access'); // Ensure access token is cleared

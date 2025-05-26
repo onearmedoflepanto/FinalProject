@@ -81,7 +81,6 @@ main {
 </style>
 
 <template>
-  <navbar />
   <main class="flex-grow container mx-auto px-4 sm:px-6 py-8 md:py-12">
     <div class="bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-200">
       <h1 class="text-2xl md:text-3xl font-bold text-teal-700 mb-2 text-center">현물 상품 비교</h1>
@@ -113,7 +112,7 @@ main {
 </template>
 
 <script setup>
-import navbar from '@/components/navbar.vue'
+import NavigationBar from '@/components/NavigationBar.vue'
 import { ref, watch, onMounted } from 'vue'
 import { fetchCommodityData } from '@/api/stockfetch.js'
 import { parseISO, isAfter, isBefore, isSameDay, isValid } from 'date-fns' // Removed formatISO
