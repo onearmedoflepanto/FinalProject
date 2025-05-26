@@ -10,7 +10,7 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
-  envDir: '../', // Load .env files from the workspace root
+  envDir: './', // Load .env files from the workspace root
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

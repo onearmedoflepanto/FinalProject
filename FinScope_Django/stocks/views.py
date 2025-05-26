@@ -12,6 +12,9 @@ from rest_framework import status
 
 import yfinance as yf
 import requests
+import html
+import re
+from decouple import config
 
 # Create your views here.
 
@@ -41,8 +44,8 @@ def get_news(request):
 
     url = "https://openapi.naver.com/v1/search/news.json"
     headers = {
-        "X-Naver-Client-Id": "b0M_QXN6Gq2OJQNRMQxV",
-        "X-Naver-Client-Secret": "MMSZgyrptA",
+        "X-Naver-Client-Id": config("NAVER_API_ID"),
+        "X-Naver-Client-Secret": config("NAVER_API_SECRET"),
     }
     params = {"query": query, "display": 10, "start": 1, "sort": "date"}
 
@@ -92,4 +95,47 @@ def get_commodity_prices(request):
                 data[name] = float(round(last_price, 2))
         except Exception as e:
             data[name] = {"error": str(e)}
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_exchange_info(request):
+    try:
+        exchange_usd = requests.get(
+            "https://m.search.naver.com/p/csearch/content/qapirender.nhn?key=calculator&pkid=141&q=%ED%99%98%EC%9C%A8&where=m&u1=keb&u6=standardUnit&u7=0&u3=USD&u4=KRW&u8=down&u2=1"
+        ).json()
+        exchange_jpy = requests.get(
+            "https://m.search.naver.com/p/csearch/content/qapirender.nhn?key=calculator&pkid=141&q=%ED%99%98%EC%9C%A8&where=m&u1=keb&u6=standardUnit&u7=0&u3=JPY&u4=KRW&u8=down&u2=1"
+        ).json()
+        exchange_cny = requests.get(
+            "https://m.search.naver.com/p/csearch/content/qapirender.nhn?key=calculator&pkid=141&q=%ED%99%98%EC%9C%A8&where=m&u1=keb&u6=standardUnit&u7=0&u3=CNY&u4=KRW&u8=down&u2=1"
+        ).json()
+
+        exchange_usd = float(exchange_usd["country"][1]["value"].replace(",", ""))
+        exchange_jpy = float(exchange_jpy["country"][1]["value"].replace(",", "")) * 100
+        exchange_cny = float(exchange_cny["country"][1]["value"].replace(",", "")) * 10
+
+        data = {"USD": exchange_usd, "JPY": exchange_jpy, "CNY": exchange_cny}
+    except Exception as e:
+        print("환율 조회 api 오류.", e)
+        data = {"USD": 1000, "JPY": 2000, "CNY": 1000}
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_news_list(request):
+    url = "https://openapi.naver.com/v1/search/news.json"
+    params = {"query": "주식", "display": 5, "sort": "date"}
+    headers = {
+        "X-Naver-Client-Id": config("NAVER_API_ID"),
+        "X-Naver-Client-Secret": config("NAVER_API_SECRET"),
+    }
+    res = requests.get(url, params=params, headers=headers)
+    data = []
+    for news in res.json().get("items", []):
+        title = html.unescape(news["title"])
+        processed = re.sub(r"<[^>]+>", "", title)
+        data.append({"title": processed, "link": news["link"]})
+
     return Response(data, status=status.HTTP_200_OK)
