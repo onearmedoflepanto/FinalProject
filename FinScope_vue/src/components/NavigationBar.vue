@@ -6,7 +6,7 @@
       <div class="hidden md:flex flex-grow justify-center items-center space-x-1 lg:space-x-3 menu-bar">
         <RouterLink to="/deposit-page" class="text-gray-700 font-medium text-sm">예적금 비교</RouterLink>
         <RouterLink to="/commodities-price" class="text-gray-700 font-medium text-sm">현물상품</RouterLink>
-        <RouterLink to="/stock-info" class="text-gray-700 font-medium text-sm">주식 정보</RouterLink>
+        <RouterLink to="/stock-search" class="text-gray-700 font-medium text-sm">주식 정보</RouterLink>
         <RouterLink to="/bank-map" class="text-gray-700 font-medium text-sm">은행 찾기</RouterLink>
         <RouterLink to="/recommend-deposit" class="text-gray-700 font-medium text-sm">추천 금융상품</RouterLink>
         <RouterLink to="/board" class="text-gray-700 font-medium text-sm">게시판</RouterLink>

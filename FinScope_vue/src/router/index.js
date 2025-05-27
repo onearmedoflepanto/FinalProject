@@ -16,6 +16,7 @@ import UserActivitiesSection from '../views/mypage/UserActivitiesSection.vue'
 import SavedProductsSection from '../views/mypage/SavedProductsSection.vue'
 import RecommendDeposit from '../views/RecommendDeposit.vue'
 import StockInfo from '../views/StockInfo.vue'
+import StockSearch from '../views/StockSearch.vue'
 import Signup from '../views/Signup.vue'
 import NaverLoginCallback from '@/views/NaverLoginCallback.vue'
 import NewsDetail from '../views/NewsDetail.vue' // Import the new NewsDetail component
@@ -110,6 +111,11 @@ const router = createRouter({
       path: '/stock-info',
       name: 'stock-info',
       component: StockInfo,
+    },
+    {
+      path: '/stock-search',
+      name: 'stock-search',
+      component: StockSearch,
     },
     {
       path: '/signup',

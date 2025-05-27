@@ -7,7 +7,7 @@
         <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
           <div class="md:col-span-2 space-y-8">
             <div class="bg-white p-6 rounded-lg shadow-lg">
-              <h2 class="text-2xl font-semibold mb-4 text-center">{{ `${dayjs().format('MM월 DD일')} 1분봉 그래프` }}</h2>
+              <h2 class="text-2xl font-semibold mb-4 text-center">{{ `${dayjs().format('MM월 DD일')} 5분봉 그래프` }}</h2>
               <canvas ref="candleChart" class="w-full h-64 md:h-80"></canvas>
               <div class="mt-6 text-center">
                 <button @click="handleBookmark"
@@ -40,13 +40,13 @@
                     <template v-if="news.link && news.link.startsWith('http')">
                       <a :href="news.link" target="_blank" rel="noopener noreferrer"
                         class="font-medium text-sm text-gray-700 hover:text-teal-600 cursor-pointer">
-                        <h4 class="text-center mb-1">{{ news.title }}</h4>
+                        <h4 class="text-center mb-1"><strong>{{ news.title }}</strong></h4>
                         {{ news.description }}
                       </a>
                     </template>
                     <template v-else>
                       <div class="font-medium text-sm text-gray-700">
-                        <h4 class="text-center mb-1">{{ news.title }}</h4>
+                        <h4 class="text-center mb-1"><strong>{{ news.title }}</strong></h4>
                         <p>{{ news.description }}</p>
                         <p v-if="!news.link" class="text-xs text-red-500 text-center mt-1">(링크 정보 없음)</p>
                         <p v-else class="text-xs text-red-500 text-center mt-1">(유효하지 않은 링크: {{ news.link }})</p>
@@ -93,7 +93,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { useRoute } from 'vue-router'; // useRoute 추가
+import { useRoute, useRouter } from 'vue-router'; // useRoute 추가
 import {
   Chart,
   TimeScale,
@@ -108,6 +108,7 @@ import api from '@/api/axios'
 import dayjs from 'dayjs'
 
 const route = useRoute()
+const router = useRouter()
 const currentView = ref('stockInfo')
 const searchQueryDisplay = ref('')
 
@@ -249,6 +250,7 @@ async function renderChart(chartData) {
             type: 'time',
             time: {
               unit: 'minute',
+              stepSize: 5,
               tooltipFormat: 'yyyy-MM-dd HH:mm', // 툴팁에는 날짜와 시간 모두 표시
               displayFormats: { // 축 레이블에는 시간만 표시
                 minute: 'HH:mm',
@@ -303,6 +305,11 @@ const loadDataFromQuery = async () => {
 };
 
 onMounted(async () => {
+  if (!route.query.search) {
+    router.push('/stock-search');
+    return;
+  }
+
   await loadDataFromQuery();
   if (searchQueryDisplay.value && searchQueryDisplay.value !== '검색어를 입력해주세요.') {
     try {

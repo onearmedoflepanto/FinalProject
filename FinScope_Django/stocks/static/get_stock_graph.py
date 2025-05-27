@@ -74,7 +74,6 @@ def get_domestic_stock_info(access_token, stock_code):
     URL = f"{BASE_URL}{PATH}"
 
     all_data = []
-
     while True:
         headers = {
             "Content-Type": "application/json",
@@ -149,6 +148,23 @@ def get_overseas_stock_info(access_token, stock_code):
         print("데이터 오류:", response.status_code, response.text)
 
 
+def compress_to_5min_candles(data):
+    df = pd.DataFrame(data)
+    df["datetime"] = pd.to_datetime(df["x"], unit="ms")
+    df.set_index("datetime", inplace=True)
+
+    df_5min = (
+        df.resample("5T")
+        .agg({"o": "first", "h": "max", "l": "min", "c": "last", "v": "sum"})
+        .dropna()
+        .reset_index()
+    )
+
+    df_5min["x"] = (df_5min["datetime"].astype(int) / 10**6).astype(int)
+    result = df_5min[["x", "o", "h", "l", "c", "v"]].to_dict("records")
+    return result
+
+
 def get_stock_graph(name):
     jsondata = stock_code_search(name)
 
@@ -163,9 +179,11 @@ def get_stock_graph(name):
     access_token = load_cached_token() or get_access_token()
 
     if re.fullmatch(r"\d+", stock_code):
-        return get_domestic_stock_info(access_token, stock_code)
+        data = get_domestic_stock_info(access_token, stock_code)
+        return compress_to_5min_candles(data)
     elif re.fullmatch(r"[A-Z.]+", stock_code):
-        return get_overseas_stock_info(access_token, stock_code)
+        data = get_overseas_stock_info(access_token, stock_code)
+        return compress_to_5min_candles(data)
     else:
         print("코드 입력 오류/", stock_code)
         return None
