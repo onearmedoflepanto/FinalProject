@@ -77,6 +77,11 @@ main {
   border-radius: 0.5rem;
   padding: 1rem;
   border: 1px solid #e5e7eb;
+  color: white;
+}
+
+.chart-container * {
+  color: white !important;
 }
 </style>
 

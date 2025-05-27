@@ -40,7 +40,8 @@ def detail(request, name):
 
 @api_view(["GET"])
 def get_news(request):
-    query = request.GET.get("query", "삼성전자")
+    query = request.GET.get("q", "주식")
+    print(f"쿼리 : {query}")
 
     url = "https://openapi.naver.com/v1/search/news.json"
     headers = {
@@ -50,7 +51,24 @@ def get_news(request):
     params = {"query": query, "display": 10, "start": 1, "sort": "date"}
 
     res = requests.get(url, headers=headers, params=params)
-    return JsonResponse(res.json())
+    cleaned_data = []
+
+    for news in res.json().get("items", []):
+        title = html.unescape(news["title"])
+        title = re.sub(r"<[^>]*>", "", title)
+
+        description = html.unescape(news["description"])
+        description = re.sub(r"<[^>]*>", "", description)
+
+        cleaned_data.append(
+            {
+                "title": title.strip(),
+                "link": news["link"],
+                "description": description.strip(),
+            }
+        )
+
+    return JsonResponse({"items": cleaned_data})
 
 
 @api_view(["GET", "POST"])

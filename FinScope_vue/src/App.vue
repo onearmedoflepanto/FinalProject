@@ -7,7 +7,7 @@ import Footer from '@/components/footer.vue' // Assuming footer.vue is in src/co
 <template>
   <div class="flex flex-col min-h-screen">
     <NavigationBar />
-    <RouterView />
+    <RouterView class="px-4" />
     <Footer />
   </div>
 </template>

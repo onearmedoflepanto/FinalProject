@@ -112,5 +112,6 @@ export default {
 .chart-wrapper {
   height: 100%;
   min-height: 0;
+  color: white;
 }
 </style>

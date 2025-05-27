@@ -123,29 +123,87 @@ def get_domestic_stock_info(access_token, stock_code):
 
 
 def get_overseas_stock_info(access_token, stock_code):
-    url = f"{BASE_URL}/uapi/overseas-price/v1/quotations/dailyprice"
-    headers = {
-        "Content-Type": "application/json",
-        "authorization": f"Bearer {access_token}",
-        "appkey": APP_KEY,
-        "appsecret": APP_SECRET,
-        "tr_id": "HHDFS76240000",
-    }
-    params = {
-        "AUTH": "",
-        "EXCD": "NAS",
-        "SYMB": stock_code,
-        "GUBN": 0,
-        "BYMD": "",
-        "MODP": 0,
-    }
+    def call_api(exchange_code, symbol_code, nmin, keyb="", next_value=""):
+        PATH = "/uapi/overseas-price/v1/quotations/inquire-time-itemchartprice"
+        URL = f"{BASE_URL}{PATH}"
+        params = {
+            "AUTH": "",
+            "EXCD": exchange_code,
+            "SYMB": symbol_code,
+            "NMIN": str(nmin),
+            "PINC": "1",
+            "NEXT": next_value,
+            "NREC": "120",
+            "FILL": "",
+            "KEYB": keyb,
+        }
+        headers = {
+            "content-type": "application/json",
+            "authorization": f"Bearer {access_token}",
+            "appkey": APP_KEY,
+            "appsecret": APP_SECRET,
+            "tr_id": "HHDFS76950200",
+            "custtype": "P",
+        }
+        time.sleep(0.1)
+        response = requests.get(URL, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"API 호출 실패: {response.status_code}, {response.text}")
+            return None
 
-    response = requests.get(url, headers=headers, params=params)
-    if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        print("데이터 오류:", response.status_code, response.text)
+    def get_next_keyb(output2, nmin):
+        last = output2[-1]
+        last_time = datetime.strptime(last["xymd"] + last["xhms"], "%Y%m%d%H%M%S")
+        next_time = last_time - timedelta(minutes=nmin)
+        return next_time.strftime("%Y%m%d%H%M%S")
+
+    def convert_to_ohlcv_list(df):
+        df = df[["datetime", "open", "high", "low", "last", "evol"]]
+        df = df.rename(
+            columns={"open": "o", "high": "h", "low": "l", "last": "c", "evol": "v"}
+        )
+        df["x"] = (df["datetime"].astype(int) / 10**6).astype(int)
+        return df[["x", "o", "h", "l", "c", "v"]].to_dict("records")
+
+    def convert_to_dataframe(data):
+        if "output2" not in data:
+            return pd.DataFrame()
+        df = pd.DataFrame(data["output2"])
+        df = df[["tymd", "xhms", "open", "high", "low", "last", "evol"]]
+        df["datetime"] = pd.to_datetime(df["tymd"] + df["xhms"], format="%Y%m%d%H%M%S")
+        return df
+
+    exchange_code = "NAS"
+    nmin = 1
+    max_loops = 3  # 기본 반복 횟수, 필요 시 조절
+
+    all_df = pd.DataFrame()
+    first = call_api(exchange_code, stock_code, nmin)
+    if not first or "output2" not in first:
+        return []
+
+    df = convert_to_dataframe(first)
+    all_df = pd.concat([all_df, df], ignore_index=True)
+    next_value = first["output1"].get("next", "")
+    keyb = get_next_keyb(first["output2"], nmin)
+
+    for _ in range(max_loops - 1):
+        next_data = call_api(
+            exchange_code, stock_code, nmin, keyb=keyb, next_value=next_value
+        )
+        if not next_data or "output2" not in next_data:
+            break
+        df = convert_to_dataframe(next_data)
+        all_df = pd.concat([all_df, df], ignore_index=True)
+        next_value = next_data["output1"].get("next", "")
+        keyb = get_next_keyb(next_data["output2"], nmin)
+
+    all_df.drop_duplicates(inplace=True)
+    all_df.sort_values(by="datetime", inplace=True)
+
+    return convert_to_ohlcv_list(all_df)
 
 
 def compress_to_5min_candles(data):
@@ -154,7 +212,7 @@ def compress_to_5min_candles(data):
     df.set_index("datetime", inplace=True)
 
     df_5min = (
-        df.resample("5T")
+        df.resample("5min")
         .agg({"o": "first", "h": "max", "l": "min", "c": "last", "v": "sum"})
         .dropna()
         .reset_index()

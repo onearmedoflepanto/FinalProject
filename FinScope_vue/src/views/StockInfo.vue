@@ -36,44 +36,35 @@
               <div class="bg-white p-4 rounded-lg shadow-lg h-[400px] overflow-y-auto">
                 <h2 class="text-2xl font-semibold mb-4 text-center">관련 뉴스</h2>
                 <div class="space-y-4 news-scroll pr-2">
-                  <div v-for="(news, i) in newsList" :key="i" class="py-1 border-b border-gray-200 last:border-b-0">
-                    <template v-if="news.link && news.link.startsWith('http')">
-                      <a :href="news.link" target="_blank" rel="noopener noreferrer"
-                        class="font-medium text-sm text-gray-700 hover:text-teal-600 cursor-pointer">
-                        <h4 class="text-center mb-1"><strong>{{ news.title }}</strong></h4>
-                        {{ news.description }}
-                      </a>
-                    </template>
-                    <template v-else>
-                      <div class="font-medium text-sm text-gray-700">
-                        <h4 class="text-center mb-1"><strong>{{ news.title }}</strong></h4>
-                        <p>{{ news.description }}</p>
-                        <p v-if="!news.link" class="text-xs text-red-500 text-center mt-1">(링크 정보 없음)</p>
-                        <p v-else class="text-xs text-red-500 text-center mt-1">(유효하지 않은 링크: {{ news.link }})</p>
-                      </div>
-                    </template>
+                  <div v-for="(news, i) in newsList?.items" :key="i"
+                    class="py-1 border-b border-gray-200 last:border-b-0">
+                    <a :href="news.link" target="_blank" rel="noopener noreferrer"
+                      class="font-medium text-sm text-gray-700 hover:text-teal-600 cursor-pointer">
+                      <h4 class="text-center mb-1"><strong>{{ news.title }}</strong></h4>
+                      <p>{{ news.description }}</p>
+                    </a>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="currentView === 'videoDetail'" class="content-section bg-white p-6 rounded-lg shadow-lg">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-2xl font-semibold text-teal-700">{{ selectedVideo.title }}</h2>
-          <button @click="backToStockInfo"
-            class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 text-sm">목록으로</button>
+        <div v-if="currentView === 'videoDetail'" class="content-section bg-white p-6 rounded-lg shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-teal-700">{{ selectedVideo.title }}</h2>
+            <button @click="backToStockInfo"
+              class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 text-sm">목록으로</button>
+          </div>
+          <div class="video-detail-container mb-4">
+            <iframe :src="videoPlayerUrl" title="YouTube video player" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen></iframe>
+          </div>
+          <p class="text-sm text-gray-600 mb-1">채널: <span class="font-medium">{{ selectedVideo.channelTitle }}</span>
+          </p>
+          <p class="text-sm text-gray-600">게시일: <span class="font-medium">{{ selectedVideo.publishedAt }}</span></p>
         </div>
-        <div class="video-detail-container mb-4">
-          <iframe :src="videoPlayerUrl" title="YouTube video player" frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen></iframe>
-        </div>
-        <p class="text-sm text-gray-600 mb-1">채널: <span class="font-medium">{{ selectedVideo.channelTitle }}</span>
-        </p>
-        <p class="text-sm text-gray-600">게시일: <span class="font-medium">{{ selectedVideo.publishedAt }}</span></p>
       </div>
     </div>
   </main>
@@ -163,7 +154,8 @@ const fetchVideos = async (query) => {
 };
 
 const loadNewsData = async function () {
-  const response = await api.get('/api/stocks/news-list/')
+  const query = searchQueryDisplay.value
+  const response = await api.get(`/api/stocks/get-news/?q=${query}}`)
   return response.data
 }
 
@@ -194,6 +186,7 @@ async function loadChartData(searchQuery) {
     return null
   }
   const response = await api.get(`/api/stocks/stock-chart/${searchQuery}/`)
+  console.log(response)
   return response.data
 }
 
@@ -228,8 +221,14 @@ async function renderChart(chartData) {
     const month = (firstDataPointTime.getMonth() + 1).toString().padStart(2, '0')
     const day = firstDataPointTime.getDate().toString().padStart(2, '0')
 
-    const minTime = `${year}-${month}-${day}T09:00:00`
-    const maxTime = `${year}-${month}-${day}T15:30:00`
+    let minTime, maxTime;
+    if (stockCode.value.match(/^[A-Z]/)) { // stockCode가 알파벳으로 시작하면 외국 주식
+      minTime = new Date(chartData[0].x).toISOString().slice(0, 19);
+      maxTime = new Date(chartData[chartData.length - 1].x).toISOString().slice(0, 19);
+    } else {
+      minTime = `${year}-${month}-${day}T09:00:00`;
+      maxTime = `${year}-${month}-${day}T15:30:00`;
+    }
 
     new Chart(candleChart.value, {
       type: 'candlestick',
@@ -273,33 +272,38 @@ async function renderChart(chartData) {
 
 
 const loadDataFromQuery = async () => {
-  const queryName = route.query.search
+  const queryName = route.query.search;
   if (queryName) {
-    searchQueryDisplay.value = queryName
-    fetchVideos(queryName)
-    newsList.value = await loadNewsData()
+    searchQueryDisplay.value = queryName;
+    fetchVideos(queryName);
+    try {
+      newsList.value = await loadNewsData();
+    } catch (error) {
+      console.error('뉴스 로딩 중 오류 발생:', error);
+      newsList.value = { items: [] };
+    }
 
     try {
-      const chartData = await loadChartData(queryName)
+      const chartData = await loadChartData(queryName);
       if (chartData) {
-        renderChart(chartData)
+        renderChart(chartData);
       } else {
-        console.error('차트 데이터를 불러오지 못했습니다.')
-        const existingChart = Chart.getChart(candleChart.value)
+        console.error('차트 데이터를 불러오지 못했습니다.');
+        const existingChart = Chart.getChart(candleChart.value);
         if (existingChart) {
           existingChart.destroy();
         }
       }
     } catch (error) {
-      console.error('차트 로딩 중 오류 발생:', error)
+      console.error('차트 로딩 중 오류 발생:', error);
     }
   } else {
-    searchQueryDisplay.value = '검색어를 입력해주세요.'
-    videos.value = []
-    newsList.value = []
+    searchQueryDisplay.value = '검색어를 입력해주세요.';
+    videos.value = [];
+    newsList.value = [];
     const existingChart = Chart.getChart(candleChart.value);
     if (existingChart) {
-      existingChart.destroy()
+      existingChart.destroy();
     }
   }
 };
@@ -310,6 +314,7 @@ onMounted(async () => {
     return;
   }
 
+  loadNewsData()
   await loadDataFromQuery();
   if (searchQueryDisplay.value && searchQueryDisplay.value !== '검색어를 입력해주세요.') {
     try {
