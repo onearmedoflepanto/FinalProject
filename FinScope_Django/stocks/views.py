@@ -1,4 +1,4 @@
-from .static.get_stock_graph import get_stock_graph
+from .static.get_stock_graph import get_stock_graph, stock_code_search
 
 from .models import StockDetail
 from .serializers import StockSerializer
@@ -136,19 +136,32 @@ def get_news_list(request):
     for news in res.json().get("items", []):
         title = html.unescape(news["title"])
         processed = re.sub(r"<[^>]+>", "", title)
-        data.append({"title": processed, "link": news["link"]})
+        description = html.unescape(news["description"])
+        processed_description = re.sub(r"<[^>]+>", "", description)
+        data.append(
+            {
+                "title": processed,
+                "link": news["link"],
+                "description": processed_description,
+            }
+        )
 
     return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
 def get_chart_graph(request, name):
-    df = get_stock_graph(name)
+    data = get_stock_graph(name)
 
-    if df is None:
+    if data is None:
         return Response(
             {"error": "차트 데이터 조회 실패"}, status=status.HTTP_400_BAD_REQUEST
         )
     else:
-        data = df.to_dict(orient="records")
         return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_chart_code(request, name):
+    code = stock_code_search(name)
+    return Response({"code": code}, status=status.HTTP_200_OK)

@@ -2,29 +2,22 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
-User = get_user_model()
-import requests
-from django.conf import settings
-from django.shortcuts import redirect, render
-
-from .serializers import UserSerializer, SavedFinancialProductSerializer # Import SavedFinancialProductSerializer
-from .models import SavedFinancialProduct # Import SavedFinancialProduct model
-from rest_framework.permissions import IsAuthenticated
-
 from django.shortcuts import get_object_or_404
 
+User = get_user_model()
+from .serializers import (
+    UserSerializer,
+    SavedFinancialProductSerializer,
+)
+from .models import SavedFinancialProduct
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from rest_framework.response import Response
 
+import requests
+from decouple import config
 
-# View to render the login page
-def login_page(request):
-    return render(request, 'login.html')
-
-# View to render the signup page
-def signup_page(request):
-    return render(request, 'sign_up.html')
 
 @api_view(["POST"])
 def sign_up(request):
@@ -35,9 +28,10 @@ def sign_up(request):
 
     if User.objects.filter(username=username).exists():
         return Response(
-            {"error": "이미 존재하는 사용자명입니다."}, status=status.HTTP_400_BAD_REQUEST
+            {"error": "이미 존재하는 사용자명입니다."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     if User.objects.filter(email=email).exists():
         return Response(
             {"error": "이미 사용중인 이메일입니다."}, status=status.HTTP_400_BAD_REQUEST
@@ -96,7 +90,7 @@ def logout(request):
 @permission_classes([IsAuthenticated])
 @api_view(["GET", "PUT"])
 def mypage(request):
-    user = get_object_or_404(User, pk = request.user.pk)
+    user = get_object_or_404(User, pk=request.user.pk)
     if request.method == "GET":
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -134,10 +128,12 @@ def follow(request, pk):
     return Response({"message": message}, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def save_financial_product(request):
-    serializer = SavedFinancialProductSerializer(data=request.data, context={'request': request})
+    serializer = SavedFinancialProductSerializer(
+        data=request.data, context={"request": request}
+    )
     if serializer.is_valid():
         # Check for duplicates manually if needed, though unique_together should handle it
         # fin_co_no = serializer.validated_data.get('fin_co_no')
@@ -145,67 +141,168 @@ def save_financial_product(request):
         # product_type = serializer.validated_data.get('product_type')
         # if SavedFinancialProduct.objects.filter(user=request.user, fin_co_no=fin_co_no, fin_prdt_cd=fin_prdt_cd, product_type=product_type).exists():
         #     return Response({"detail": "Product already saved."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['DELETE'])
+
+@api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def unsave_financial_product(request, product_pk): # product_pk is the ID of the SavedFinancialProduct instance
+def unsave_financial_product(
+    request, product_pk
+):  # product_pk is the ID of the SavedFinancialProduct instance
     try:
-        saved_product = SavedFinancialProduct.objects.get(pk=product_pk, user=request.user)
+        saved_product = SavedFinancialProduct.objects.get(
+            pk=product_pk, user=request.user
+        )
         saved_product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     except SavedFinancialProduct.DoesNotExist:
-        return Response({"detail": "Saved product not found or permission denied."}, status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['GET'])
-def google_login(request):
-
-    try:
-        code = request.GET.get('code')
-        if not code:
-            return Response({"error": "api 요청 코드가 없습니다. 다시 시도해 주세요."}, status=400)
-        
-        token_url = 'https://oauth2.googleapis.com/token'
-        data = {
-            'code': code,
-            'client_id': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
-            'client_secret': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
-            'redirect_uri': settings.GOOGLE_REDIRECT_URI,
-            'grant_type': 'authorization_code',
-        }
-        token_res = requests.post(token_url, data=data)
-        token_json = token_res.json()
-        access_token = token_json.get('access_token')
-
-        userinfo_res = requests.get(
-            'https://openidconnect.googleapis.com/v1/userinfo',
-            headers={'Authorization': f'Bearer {access_token}'}
+        return Response(
+            {"detail": "Saved product not found or permission denied."},
+            status=status.HTTP_404_NOT_FOUND,
         )
-        userinfo = userinfo_res.json()
 
 
-        email = userinfo.get('email')
+@api_view(["POST", "OPTIONS"])
+def social_login(request):
+    access_token = request.data.get("token")  # Google ID 토큰, Kakao/Naver 인증 코드
+    provider = request.data.get("provider")
+    state = request.data.get("state")  # Naver 로그인 시 필요
+
+    if not access_token or not provider:
+        return Response(
+            {"error": "Token and provider are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if provider == "google":
+        # Google의 경우 access_token이 ID 토큰임
+        google_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={access_token}"
+        response = requests.get(google_url)
+
+        if response.status_code != 200:
+            return Response({"error": "Invalid Google token"}, status=400)
+
+        user_info = response.json()
+        email = user_info.get("email")
+        username = user_info.get("name") or email.split("@")[0]
         if not email:
-            return Response({"error": "Google 계정에서 이메일 정보를 가져올 수 없습니다.", "details": userinfo}, status=400)
-        userinfo = userinfo_res.json()
+            return Response({"error": "Google user email not found"}, status=400)
 
-        email = userinfo['email']
-        nickname = userinfo.get('name', '구글유저')
-        user, _ = User.objects.get_or_create(email=email, defaults={
-            'username': email.split('@')[0],
-            'nickname': nickname,
-            'password': User.objects.make_random_password()
-        })
+    elif provider == "kakao":
+        token_url = "https://kauth.kakao.com/oauth/token"
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": config("KAKAO_REST_API_KEY"),
+            "redirect_uri": "http://localhost:5173/login",  # 프론트엔드 로그인 페이지 URI
+            "code": access_token,  # Kakao의 경우 access_token이 인증 코드임
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        token_response = requests.post(token_url, data=data, headers=headers)
 
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
-        refresh_token =  str(refresh)
-        redirect_url = f"http://localhost:8000/login-success/?access={access}&refresh={refresh_token}"
-        return redirect(redirect_url)
+        token_json = token_response.json()
+        if token_response.status_code != 200:
+            print(token_json)
+            return Response(
+                {
+                    "error": f"Kakao token exchange failed: {token_json.get('error_description', '')}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    except Exception as e:
-        return Response({"error": str(e)}, status=400)
+        kakao_access_token = token_json.get("access_token")
+
+        user_info_url = "https://kapi.kakao.com/v2/user/me"
+        headers = {"Authorization": f"Bearer {kakao_access_token}"}
+        user_info_response = requests.get(user_info_url, headers=headers)
+
+        user_info = user_info_response.json()
+        if user_info_response.status_code != 200:
+            print(user_info)
+            return Response(
+                {"error": "Invalid Kakao token"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        kakao_account = user_info.get("kakao_account", {})
+        email = kakao_account.get("email")
+        profile = kakao_account.get("profile", {})
+        username = profile.get("nickname")
+        kakao_id = str(user_info.get("id"))
+
+        if not username:  # 닉네임 동의 안했을 경우
+            username = f"kakao_{kakao_id}"
+        if not email:  # 이메일 동의 안했을 경우
+            email = f"{username}@kakao.com"  # 임시 이메일
+
+    elif provider == "naver":
+        # Naver의 경우 access_token이 인증 코드임
+        naver_client_id = config("NAVER_CLIENT_ID")
+        naver_client_secret = config("NAVER_CLIENT_SECRET")
+
+        token_url = "https://nid.naver.com/oauth2.0/token"
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": naver_client_id,
+            "client_secret": naver_client_secret,
+            "code": access_token,
+            "state": state,  # CSRF 방지를 위해 전달받은 state 값 사용
+        }
+        token_response = requests.post(token_url, data=data)
+
+        token_json = token_response.json()
+        if token_response.status_code != 200:
+            print(token_json)
+            return Response(
+                {
+                    "error": f"Naver token exchange failed: {token_json.get('error_description', '')}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        naver_access_token = token_json.get("access_token")
+
+        user_info_url = "https://openapi.naver.com/v1/nid/me"
+        headers = {"Authorization": f"Bearer {naver_access_token}"}
+        user_info_response = requests.get(user_info_url, headers=headers)
+
+        user_info = user_info_response.json()
+        if user_info_response.status_code != 200 or user_info.get("resultcode") != "00":
+            print(user_info)
+            return Response(
+                {"error": "Failed to get Naver user info"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response_data = user_info.get("response", {})
+        email = response_data.get("email")
+        username = response_data.get("nickname") or response_data.get("name")
+        naver_id = response_data.get("id")
+
+        if not username:  # 닉네임 정보가 없을 경우
+            username = f"naver_{naver_id}"
+        if not email:  # 이메일 정보가 없을 경우
+            email = f"{username}@naver.com"  # 임시 이메일
+
+    else:
+        return Response(
+            {"error": "Unsupported provider"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = None
+    if User.objects.filter(username=username).exists():
+        user = User.objects.get(username=username)
+    elif User.objects.filter(email=email).exists():
+        user = User.objects.get(email=email)
+
+    if not user:
+        user = User.objects.create(username=username, email=email)
+
+    refresh = RefreshToken.for_user(user)
+    return Response(
+        {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
+    )

@@ -13,4 +13,5 @@ urlpatterns = [
     path("exchange-summary/", views.get_exchange_info),
     path("news-list/", views.get_news_list),
     path("stock-chart/<str:name>/", views.get_chart_graph),
+    path("chart-code/<str:name>/", views.get_chart_code),
 ]

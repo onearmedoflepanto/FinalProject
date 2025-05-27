@@ -8,8 +8,14 @@ urlpatterns = [
     path("delete/", views.delete),
     path("mypage/", views.mypage),
     path("follow/<int:pk>/", views.follow),
-    path("google/callback/", views.google_login),
+    path("social-login/", views.social_login),
     # URLs for saved financial products
-    path("saved-products/", views.save_financial_product, name='save_financial_product'),
-    path("saved-products/<int:product_pk>/", views.unsave_financial_product, name='unsave_financial_product'),
+    path(
+        "saved-products/", views.save_financial_product, name="save_financial_product"
+    ),
+    path(
+        "saved-products/<int:product_pk>/",
+        views.unsave_financial_product,
+        name="unsave_financial_product",
+    ),
 ]
