@@ -96,10 +96,14 @@ main {
           <input type="date" v-model="endDate" name="endDate" class="date-input">
         </div>
         <div class="flex items-center gap-2 mt-4 sm:mt-0">
-          <button @click="selectCommodity('gold')" class="control-button" :class="btnClass('gold')">금 (Gold)</button>
-          <button @click="selectCommodity('silver')" class="control-button" :class="btnClass('silver')">은
+          <button @click="selectCommodity('gold')" class="control-button" :class="btnClass('gold')"
+            :disabled="isButtonDisabled">금 (Gold)</button>
+          <button @click="selectCommodity('silver')" class="control-button" :class="btnClass('silver')"
+            :disabled="isButtonDisabled">은
             (Silver)</button>
-          <button @click="selectCommodity('oil')" id="oilBtn" class="control-button" :class="btnClass">유가 (Oil)</button>
+          <button @click="selectCommodity('oil')" id="oilBtn" class="control-button" :class="btnClass('oil')"
+            :disabled="isButtonDisabled">유가
+            (Oil)</button>
         </div>
       </div>
 
@@ -112,7 +116,6 @@ main {
 </template>
 
 <script setup>
-import NavigationBar from '@/components/NavigationBar.vue'
 import { ref, watch, onMounted } from 'vue'
 import { fetchCommodityData } from '@/api/stockfetch.js'
 import { parseISO, isAfter, isBefore, isSameDay, isValid } from 'date-fns' // Removed formatISO
@@ -129,22 +132,33 @@ const endDate = ref('')
 const loading = ref(false)
 const loadingMessage = ref('')
 const chartData = ref([])
+const isButtonDisabled = ref(false)
 
 
 async function loadData() {
   loading.value = true
+  isButtonDisabled.value = true
   loadingMessage.value = `${commodityName(currentCommodity.value)} 가격 데이터를 불러오는 중...`
 
-  const fetchedData = await fetchCommodityData(currentCommodity.value) // fetchCommodityData now returns an array
+  try {
+    const fetchedData = await fetchCommodityData(currentCommodity.value) // fetchCommodityData now returns an array
 
-  const processedData = fetchedData.map(item => ({
-    Date: parseISO(item.Date), // item.Date is the full timestamp string
-    Price: item.Price
-  }));
-  chartData.value = filterData(processedData);
+    const processedData = fetchedData.map(item => ({
+      Date: parseISO(item.Date), // item.Date is the full timestamp string
+      Price: item.Price
+    }));
 
-  renderChart()
-  loading.value = false
+    chartData.value = filterData(processedData);
+    renderChart()
+  } catch (error) {
+    console.error("Error loading data:", error);
+    // Optionally, display an error message to the user
+  } finally {
+    loading.value = false
+    setTimeout(() => {
+      isButtonDisabled.value = false
+    }, 2000) // Disable buttons for 2 seconds after loading
+  }
 }
 function selectCommodity(commodity) {
   currentCommodity.value = commodity
@@ -171,7 +185,9 @@ function filterData(data) {
 function renderChart() {
   if (chartInstance.value) chartInstance.value.destroy()
 
-  if (!chartCanvas.value || !chartData.value.length) return
+  if (!chartCanvas.value || !chartData.value.length) {
+    return
+  }
 
   const ctx = chartCanvas.value.getContext('2d')
   const borderColor = currentCommodity.value === 'gold' ? '#FBBF24' :
