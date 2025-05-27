@@ -212,4 +212,9 @@ coverage
 *.tsbuildinfo
 
 # End of https://www.toptal.com/developers/gitignore/api/django,vuejs,vue
+
+# Project specific files
+accestoken.json
+token.dat
+FinScope_Django/accestoken.json
 >>>>>>> dev_pillar
