@@ -1,4 +1,5 @@
 from .static.get_stock_graph import get_stock_graph, stock_code_search
+from .static.get_recommend import get_recommend
 
 from .models import StockDetail
 from .serializers import StockSerializer
@@ -14,6 +15,7 @@ import yfinance as yf
 import requests
 import html
 import re
+import json
 from decouple import config
 
 # Create your views here.
@@ -183,3 +185,25 @@ def get_chart_graph(request, name):
 def get_chart_code(request, name):
     code = stock_code_search(name)
     return Response({"code": code}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_ai_recommend(request):
+    user_info_str = request.GET.get("user_info")
+    try:
+        user_info = (
+            json.loads(user_info_str) if user_info_str else {"tendency": "normal"}
+        )
+    except json.JSONDecodeError:
+        user_info = {"tendency": "normal"}
+
+    response_text = get_recommend(user_info)
+    print(repr(response_text))
+
+    try:
+        result = json.loads(response_text)
+        return Response(result, status=status.HTTP_200_OK)
+    except Exception as e:
+        print("문자열 처리 실패:", e)
+        fallback = [{"name": "데이터 로드 오류", "type": "deposit"}]
+        return Response(fallback, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
