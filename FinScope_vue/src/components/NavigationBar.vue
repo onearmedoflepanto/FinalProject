@@ -1,7 +1,7 @@
 <template>
   <nav class="bg-gray-900 shadow-md sticky top-0 z-50">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <RouterLink :to="{ name: 'main' }" class="text-2xl font-bold mr-4 transition-colors" style="color: white !important;">FinScope</RouterLink> 
+      <RouterLink :to="{ name: 'main' }" class="logo-link text-2xl font-bold mr-4 transition-colors" style="color: white !important;">FinScope</RouterLink>
 
       <div class="hidden md:flex flex-grow justify-center items-center space-x-1 lg:space-x-2 menu-bar">
         <RouterLink to="/deposit-page" class="nav-link">예적금 비교</RouterLink>
@@ -104,5 +104,8 @@ onMounted(() => {
 
 .mobile-nav-link.router-link-exact-active {
   @apply text-primary bg-gray-700 font-semibold;
+}
+.logo-link.router-link-exact-active {
+  @apply bg-transparent;
 }
 </style>

@@ -37,7 +37,7 @@
         <div class="container mx-auto px-6 text-center">
           <h2 class="text-3xl md:text-4xl font-bold text-primary-light mb-6">FinScope에 오신 것을 환영합니다</h2>
           <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            FinScope는 AI 기술을 활용하여 복잡한 금융 세계를 쉽고 명확하게 탐색할 수 있도록 돕는 혁신적인 금융 솔루션 플랫폼입니다. 개인 맞춤형 금융 정보 제공, 투자 분석, 시장 동향 예측 등 다양한 기능을 통해 사용자의 성공적인 금융 여정을 지원합니다.
+            FinScope는 AI 기술을 활용하여 복잡한 금융 세계를 쉽고 명확하게 탐색할 수 있도록 돕는 혁신적인 금융 솔루션 플랫폼입니다. 개인 맞춤형 금융 상품 추천, 주변 은행 파악, 실시간 시장 동향 등 다양한 기능을 통해 사용자의 성공적인 금융 여정을 지원합니다.
           </p>
         </div>
       </section>
@@ -49,15 +49,15 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
             <div class="feature-card bg-gray-900 p-6 rounded-lg shadow-xl text-center hover:shadow-primary-light/30">
               <h3 class="text-2xl font-semibold text-white mb-3">AI 기반 맞춤 추천</h3>
-              <p class="text-gray-400">사용자의 투자 성향, 재정 목표, 관심사를 정밀하게 분석하여 최적화된 금융 상품 및 포트폴리오를 AI가 지능적으로 추천합니다.</p>
+              <p class="text-gray-400">사용자의 투자 성향, 재정 목표, 관심사를 정밀하게 분석하여 최적화된 금융 상품을 AI가 추천합니다.</p>
             </div>
             <div class="feature-card bg-gray-900 p-6 rounded-lg shadow-xl text-center hover:shadow-primary-light/30">
-              <h3 class="text-2xl font-semibold text-white mb-3">실시간 시장 분석</h3>
-              <p class="text-gray-400">주식, 환율, 원자재 등 국내외 주요 금융 시장의 실시간 데이터와 심층적인 분석 정보를 한눈에 제공하여 시장 변화에 신속하게 대응할 수 있도록 지원합니다.</p>
+              <h3 class="text-2xl font-semibold text-white mb-3">실시간 시장 파악</h3>
+              <p class="text-gray-400">주식, 환율, 원자재 등 국내외 주요 금융 시장의 실시간 데이터를 한눈에 제공하여 시장 변화에 신속하게 대응할 수 있도록 지원합니다.</p>
             </div>
             <div class="feature-card bg-gray-900 p-6 rounded-lg shadow-xl text-center hover:shadow-primary-light/30">
-              <h3 class="text-2xl font-semibold text-white mb-3">종합 금융 정보</h3>
-              <p class="text-gray-400">예적금 비교부터 추천, 현물 및 주식 정보, 은행 찾기 서비스까지 사용자의 모든 금융 활동을 지원하는 포괄적인 정보를 제공합니다.</p>
+              <h3 class="text-2xl font-semibold text-white mb-3">은행 찾기</h3>
+              <p class="text-gray-400">현재 위치를 바탕으로 전국의 은행을 검색하여 최적화된 루트와 예상 시간을 알려드립니다.</p>
             </div>
           </div>
         </div>
@@ -74,7 +74,7 @@
               <router-link to="/deposit-page" class="inline-block bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-6 rounded-lg transition-colors">예적금 비교하기</router-link>
             </div>
             <div>
-              <img src="@/assets/images/finance_02.jpg" alt="금융 상품 비교" class="rounded-lg shadow-xl w-full h-auto object-cover max-h-80">
+              <img src="@/assets/images/FinScope_logo.jpg" alt="금융 상품 비교" class="rounded-lg shadow-xl w-full h-auto object-cover max-h-50">
             </div>
           </div>
         </div>
@@ -86,13 +86,13 @@
           <h2 class="text-3xl md:text-4xl font-bold text-primary-light mb-12 text-center">실시간 투자 정보 확인</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center">
             <div class="order-2 md:order-1">
-              <img src="@/assets/images/finance_03.jpg" alt="투자 정보" class="rounded-lg shadow-xl w-full h-auto object-cover max-h-80">
+              <img src="@/assets/images/chart.jpg" alt="투자 정보" class="rounded-lg shadow-xl w-full h-auto object-cover max-h-80">
             </div>
             <div class="text-gray-300 leading-relaxed order-1 md:order-2">
               <h3 class="text-2xl font-semibold text-white mb-4">주식 및 현물 가격 정보</h3>
               <p class="mb-4">국내외 주요 주식 시장의 실시간 시세와 변동 추이, 기업 정보를 확인하고, 금, 원유 등 주요 현물 상품의 가격 변동을 실시간으로 추적하여 성공적인 투자 결정을 내리세요.</p>
               <router-link to="/stock-info" class="inline-block bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-6 rounded-lg transition-colors mr-4">주식 정보 보기</router-link>
-              <router-link to="/commodities-price" class="inline-block border border-primary text-primary-light hover:bg-primary hover:text-white font-semibold py-2 px-6 rounded-lg transition-colors">현물 가격 보기</router-link>
+              <router-link to="/commodities-price" class="inline-block bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-6 rounded-lg transition-colors">현물 가격 보기</router-link>
             </div>
           </div>
         </div>
@@ -112,7 +112,7 @@
       <!-- Latest News Section (formerly Latest Information) -->
       <section id="latest-info" class="py-12 md:py-16 bg-gray-800">
         <div class="container mx-auto px-6">
-        <h2 class="text-3xl md:text-4xl font-bold text-primary-light mb-12 text-center">오늘의 금융 뉴스</h2>
+        <h2 class="text-3xl md:text-4xl font-bold text-primary-light mb-12 text-center">오늘의 금융 소식</h2>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 items-stretch">
             <div class="info-box-container bg-gray-900 p-6 rounded-lg shadow-lg">
               <h3 class="text-xl font-semibold text-white mb-3">실시간 환율</h3>
