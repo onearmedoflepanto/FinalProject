@@ -1,0 +1,118 @@
+.hidden { display: none !important; } 
+
+.menu-bar a {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    white-space: nowrap;
+}
+.menu-bar a:hover {
+    background-color: #f0fdfa;
+    color: #0d9488;
+}
+.menu-bar a.active {
+    color: #0d9488;
+    font-weight: 600;
+    border-bottom: 2px solid #0d9488;
+    padding-bottom: calc(0.5rem - 2px);
+}
+.table-fixed th, .table-fixed td {
+    padding: 0.75rem 1rem; 
+    text-align: left;
+    font-size: 0.875rem; 
+}
+.table-fixed thead th {
+    background-color: #f3f4f6; 
+    color: #374151; 
+    font-weight: 600; 
+    border-bottom: 2px solid #e5e7eb; 
+}
+.table-fixed tbody tr:nth-child(even) {
+    background-color: #f9fafb; 
+}
+.table-fixed tbody tr:hover {
+    background-color: #f0fdfa; 
+}
+.table-fixed tbody td {
+    color: #4b5563; 
+    border-bottom: 1px solid #e5e7eb; 
+}
+.table-fixed tbody td .post-title-link { 
+    color: #0d9488; 
+    text-decoration: none;
+    cursor: pointer;
+}
+.table-fixed tbody td .post-title-link:hover {
+    text-decoration: underline;
+}
+.pagination a, .pagination span {
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.125rem; 
+    border: 1px solid #d1d5db; 
+    border-radius: 0.375rem; 
+    color: #374151; 
+    text-decoration: none;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+.pagination a:hover {
+    background-color: #e5e7eb; 
+}
+.pagination .active {
+    background-color: #0d9488; 
+    color: white;
+    border-color: #0d9488; 
+}
+.pagination .disabled {
+    color: #9ca3af; 
+    pointer-events: none;
+}
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db; 
+    border-radius: 0.375rem; 
+    box-shadow: inset 0 1px 2px 0 rgba(0,0,0,0.05);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #0d9488; 
+    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25); 
+}
+.form-textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* Dark theme form inputs */
+.form-input-dark, .form-textarea-dark {
+    @apply w-full px-4 py-2.5 bg-gray-700 border border-gray-600 text-gray-100 rounded-lg shadow-sm; /* Changed to rounded-lg and px-4 py-2.5 */
+    @apply placeholder-gray-400 focus:outline-none focus:border-primary-light focus:ring-1 focus:ring-primary-light; /* Changed to focus:ring-1 */
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input-dark:focus, .form-textarea-dark:focus {
+    /* The focus:ring-1 and focus:border-primary-light are now directly in the base class */
+    /* We can add a subtle background change on focus if desired */
+    /* @apply bg-gray-600; */
+}
+
+.form-textarea-dark {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.post-detail-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+.post-detail-content {
+    line-height: 1.7;
+    color: #374151; 
+}
+.comments-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
